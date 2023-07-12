@@ -201,7 +201,7 @@ Either `npm link` command may be substituted with `yarn link`.
 ## Documentation
 
 [The documentation can be found
-online](https://matrix-org.github.io/matrix-rust-sdk/bindings/matrix-sdk-crypto-nodejs/).
+online](https://matrix-org.github.io/matrix-rust-sdk-crypto-nodejs/).
 
 To generate the documentation locally, please run the following
 command:
