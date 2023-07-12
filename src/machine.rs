@@ -7,9 +7,9 @@ use std::{
     sync::Arc,
 };
 
+use matrix_sdk_common::ruma::{serde::Raw, DeviceKeyAlgorithm, OwnedTransactionId, UInt};
 use napi::bindgen_prelude::{within_runtime_if_available, Either7, FromNapiValue, ToNapiValue};
 use napi_derive::*;
-use ruma::{serde::Raw, DeviceKeyAlgorithm, OwnedTransactionId, UInt};
 use serde_json::{value::RawValue, Value as JsonValue};
 use zeroize::Zeroize;
 
