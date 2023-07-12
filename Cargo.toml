@@ -8,7 +8,7 @@ license = "Apache-2.0"
 name = "matrix-sdk-crypto-nodejs"
 readme = "README.md"
 repository = "https://github.com/matrix-org/matrix-rust-sdk"
-rust-version = { workspace = true }
+rust-version = "1.70"
 version = "0.6.0"
 
 [package.metadata.docs.rs]
@@ -24,20 +24,20 @@ qrcode = ["matrix-sdk-crypto/qrcode"]
 tracing = ["dep:tracing-subscriber"]
 
 [dependencies]
-matrix-sdk-common = { version = "0.6.0", path = "../../crates/matrix-sdk-common", features = ["js"] }
-matrix-sdk-sqlite = { version = "0.1.0", path = "../../crates/matrix-sdk-sqlite", features = ["crypto-store"] }
-ruma = { workspace = true, features = ["rand"] }
+matrix-sdk-common = { git = "https://github.com/matrix-org/matrix-rust-sdk", rev = "f6c339a5d2207046dee010cf31733121007674f2", features = ["js"] }
+matrix-sdk-sqlite = { git = "https://github.com/matrix-org/matrix-rust-sdk", rev = "f6c339a5d2207046dee010cf31733121007674f2", features = ["crypto-store"] }
+ruma = { git = "https://github.com/ruma/ruma", rev = "a641adb4287267ba9c4778ac1ee83b4ecab11e26" }
 napi = { version = "2.9.1", default-features = false, features = ["napi6", "tokio_rt"] }
 napi-derive = "2.9.1"
-serde_json = { workspace = true }
-http = { workspace = true }
+serde_json = "1.0.91"
+http = "0.2.6"
 tracing-subscriber = { version = "0.3", default-features = false, features = ["tracing-log", "time", "smallvec", "fmt", "env-filter"], optional = true }
-vodozemac = { workspace = true, features = ["js"] }
-zeroize = { workspace = true }
+vodozemac = { version = "0.4.0", features = ["js"] }
+zeroize = "1.3.0"
 
 [dependencies.matrix-sdk-crypto]
-path = "../../crates/matrix-sdk-crypto"
-version = "0.6.0"
+git = "https://github.com/matrix-org/matrix-rust-sdk"
+rev = "f6c339a5d2207046dee010cf31733121007674f2"
 default_features = false
 features = ["js", "automatic-room-key-forwarding"]
 
