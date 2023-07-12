@@ -1,3 +1,4 @@
+use matrix_sdk_crypto::vodozemac;
 use napi_derive::*;
 
 use crate::into_err;

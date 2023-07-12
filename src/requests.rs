@@ -2,13 +2,7 @@
 
 use std::time::Duration;
 
-use matrix_sdk_crypto::requests::{
-    KeysBackupRequest as RumaKeysBackupRequest, KeysQueryRequest as RumaKeysQueryRequest,
-    RoomMessageRequest as RumaRoomMessageRequest, ToDeviceRequest as RumaToDeviceRequest,
-};
-use napi::bindgen_prelude::{Either7, FromNapiValue, ToNapiValue};
-use napi_derive::*;
-use ruma::{
+use matrix_sdk_common::ruma::{
     api::client::keys::{
         claim_keys::v3::Request as RumaKeysClaimRequest,
         upload_keys::v3::Request as RumaKeysUploadRequest,
@@ -16,6 +10,12 @@ use ruma::{
     },
     events::EventContent,
 };
+use matrix_sdk_crypto::requests::{
+    KeysBackupRequest as RumaKeysBackupRequest, KeysQueryRequest as RumaKeysQueryRequest,
+    RoomMessageRequest as RumaRoomMessageRequest, ToDeviceRequest as RumaToDeviceRequest,
+};
+use napi::bindgen_prelude::{Either7, FromNapiValue, ToNapiValue};
+use napi_derive::*;
 
 use crate::into_err;
 

@@ -1,5 +1,6 @@
 //! `GET /_matrix/client/*/sync`.
 
+use matrix_sdk_common::ruma;
 use napi_derive::*;
 
 use crate::identifiers;
