@@ -8,6 +8,7 @@ use std::{
 };
 
 use matrix_sdk_common::ruma::{serde::Raw, DeviceKeyAlgorithm, OwnedTransactionId, UInt};
+use matrix_sdk_crypto::{backups::MegolmV1BackupKey, store::RecoveryKey, types::RoomKeyBackupInfo};
 use napi::bindgen_prelude::{within_runtime_if_available, Either7, FromNapiValue, ToNapiValue};
 use napi_derive::*;
 use serde_json::{value::RawValue, Value as JsonValue};
@@ -15,7 +16,7 @@ use zeroize::Zeroize;
 
 use crate::{
     encryption, identifiers, into_err, olm, requests, responses, responses::response_from_string,
-    sync_events, types, vodozemac,
+    sync_events, types::{self, BackupKeys, RoomKeyCounts, SignatureVerification}, vodozemac,
 };
 
 /// The value used by the `OlmMachine` JS class.
@@ -453,11 +454,160 @@ impl OlmMachine {
         self.inner.cross_signing_status().await.into()
     }
 
+    /// Create a new cross signing identity and get the upload request
+    /// to push the new public keys to the server.
+    ///
+    /// Warning: This will delete any existing cross signing keys that
+    /// might exist on the server and thus will reset the trust
+    /// between all the devices.
+    ///
+    /// Uploading these keys will require user interactive auth.
+    #[napi]
+    pub async fn bootstrap_cross_signing(&self, reset: bool) -> napi::Result<()> {
+        self.inner.bootstrap_cross_signing(reset).await.map_err(into_err)?;
+        Ok(())
+    }
+
     /// Sign the given message using our device key and if available
     /// cross-signing master key.
     #[napi(strict)]
     pub async fn sign(&self, message: String) -> types::Signatures {
         self.inner.sign(message.as_str()).await.into()
+    }
+
+    /// Store the recovery key in the crypto store.
+    ///
+    /// This is useful if the client wants to support gossiping of the backup
+    /// key.
+    #[napi(strict, js_name = "saveBackupRecoveryKey")]
+    pub async fn save_recovery_key(
+        &self,
+        recovery_key_base_58: String,
+        version: String,
+    ) -> napi::Result<()> {
+        let key = RecoveryKey::from_base58(&recovery_key_base_58).map_err(into_err)?;
+
+        self.inner.backup_machine().save_recovery_key(Some(key), Some(version)).await.map_err(into_err)?;
+
+        Ok(())
+    }
+
+    /// Get the backup keys we have saved in our crypto store.
+    #[napi]
+    pub async fn get_backup_keys(&self) -> napi::Result<BackupKeys> {
+        let inner = self.inner.backup_machine().get_backup_keys().await.map_err(into_err)?;
+        Ok(BackupKeys {
+            recovery_key: inner.recovery_key.map(|k| k.to_base58()),
+            backup_version: inner.backup_version,
+        })
+    }
+
+    /// Check if the given backup has been verified by us or by another of our
+    /// devices that we trust.
+    ///
+    /// The `backup_info` should be a stringified JSON object with the following
+    /// format:
+    ///
+    /// ```json
+    /// {
+    ///     "algorithm": "m.megolm_backup.v1.curve25519-aes-sha2",
+    ///     "auth_data": {
+    ///         "public_key":"XjhWTCjW7l59pbfx9tlCBQolfnIQWARoKOzjTOPSlWM",
+    ///         "signatures": {}
+    ///     }
+    /// }
+    /// ```
+    #[napi(strict)]
+    pub async fn verify_backup(&self, backup_info: String) -> napi::Result<SignatureVerification> {
+        let backup_info: RoomKeyBackupInfo = serde_json::from_str(backup_info.as_str()).map_err(into_err)?;
+
+        let result = self.inner.backup_machine().verify_backup(backup_info, false).await.map_err(into_err)?;
+        Ok(SignatureVerification { inner: result })
+    }
+
+    /// Activate the given backup key to be used with the given backup version.
+    ///
+    /// **Warning**: The caller needs to make sure that the given `BackupKey` is
+    /// trusted, otherwise we might be encrypting room keys that a malicious
+    /// party could decrypt.
+    ///
+    /// The [`OlmMachine::verify_backup`] method can be used to do so.
+    #[napi(strict)]
+    pub async fn enable_backup_v1(
+        &self,
+        public_key_base_64: String,
+        version: String,
+    ) -> napi::Result<()> {
+        let backup_key = MegolmV1BackupKey::from_base64(&public_key_base_64).map_err(into_err)?;
+        backup_key.set_version(version);
+
+        self.inner.backup_machine().enable_backup_v1(backup_key).await.map_err(into_err)?;
+        Ok(())
+    }
+
+    /// Are we able to encrypt room keys.
+    ///
+    /// This returns true if we have an active `BackupKey` and backup version
+    /// registered with the state machine.
+    #[napi(js_name = "isBackupEnabled")]
+    pub async fn backup_enabled(&self) -> bool {
+        self.inner.backup_machine().enabled().await
+    }
+
+    /// Disable and reset our backup state.
+    ///
+    /// This will remove any pending backup request, remove the backup key and
+    /// reset the backup state of each room key we have.
+    #[napi]
+    pub async fn disable_backup(&self) -> napi::Result<()> {
+        self.inner.backup_machine().disable_backup().await.map_err(into_err)?;
+        Ok(())
+    }
+
+    /// Encrypt a batch of room keys and return a request that needs to be sent
+    /// out to backup the room keys.
+    #[napi]
+    pub async fn backup_room_keys(
+        &self,
+    ) -> napi::Result<
+        Option<
+            // TODO Reduce this to just requests::KeysBackupRequest if appropriate
+            Either7<
+                requests::KeysUploadRequest,
+                requests::KeysQueryRequest,
+                requests::KeysClaimRequest,
+                requests::ToDeviceRequest,
+                requests::SignatureUploadRequest,
+                requests::RoomMessageRequest,
+                requests::KeysBackupRequest,
+            >,
+        >,
+    > {
+        match self
+            .inner
+            .backup_machine()
+            .backup()
+            .await
+            .map_err(into_err)?
+            .map(requests::OutgoingRequest)
+        {
+            Some(r) => Ok(Some(
+                requests::OutgoingRequests::try_from(r)
+                .map_err(into_err)?,
+            )),
+
+            None => Ok(None),
+        }
+    }
+
+    /// Get the number of backed up room keys and the total number of room keys.
+    #[napi]
+    pub async fn room_key_counts(&self) -> napi::Result<RoomKeyCounts> {
+        let inner = self.inner.backup_machine().room_key_counts().await.map_err(into_err)?;
+        Ok(RoomKeyCounts {
+            total: inner.total.try_into().map_err(into_err)?,
+            backed_up: inner.backed_up.try_into().map_err(into_err)?,
+        })
     }
 
     /// Shut down the `OlmMachine`.
