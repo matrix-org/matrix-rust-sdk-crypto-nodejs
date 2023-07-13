@@ -2,12 +2,12 @@
 authors = ["Ivan Enderlin <ivane@element.io>"]
 description = "Matrix encryption library, for NodeJS"
 edition = "2021"
-homepage = "https://github.com/matrix-org/matrix-rust-sdk"
+homepage = "https://github.com/matrix-org/matrix-rust-sdk-nodejs"
 keywords = ["matrix", "chat", "messaging", "ruma", "nio"]
 license = "Apache-2.0"
 name = "matrix-sdk-crypto-nodejs"
 readme = "README.md"
-repository = "https://github.com/matrix-org/matrix-rust-sdk"
+repository = "https://github.com/matrix-org/matrix-rust-sdk-nodejs"
 rust-version = "1.70"
 version = "0.6.0"
 
