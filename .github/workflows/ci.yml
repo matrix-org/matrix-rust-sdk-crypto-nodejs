@@ -76,7 +76,7 @@ jobs:
       - name: Load cache
         uses: Swatinem/rust-cache@v2
         with:
-          save-if: ${{ github.ref == 'refs/head/main' }}
+          save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Install Node.js
         uses: actions/setup-node@v3
@@ -140,7 +140,7 @@ jobs:
       - name: Load cache
         uses: Swatinem/rust-cache@v2
         with:
-          save-if: ${{ github.ref == 'refs/head/main' }}
+          save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Build docs
         run: |
