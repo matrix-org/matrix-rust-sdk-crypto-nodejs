@@ -342,6 +342,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "bs58"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f5353f36341f7451062466f0b755b96ac3a9547e4d7f6b70d603fc721a7d7896"
+dependencies = [
+ "tinyvec",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1187,13 +1196,16 @@ dependencies = [
  "async-trait",
  "atomic",
  "base64 0.21.2",
+ "bs58",
  "byteorder",
+ "cbc",
  "cfg-if",
  "ctr",
  "dashmap",
  "eyeball",
  "futures-core",
  "futures-util",
+ "hkdf",
  "hmac",
  "itertools 0.11.0",
  "matrix-sdk-common",
@@ -1217,6 +1229,7 @@ dependencies = [
 name = "matrix-sdk-crypto-nodejs"
 version = "0.6.0"
 dependencies = [
+ "hmac",
  "http",
  "matrix-sdk-common",
  "matrix-sdk-crypto",
@@ -1224,7 +1237,11 @@ dependencies = [
  "napi",
  "napi-build",
  "napi-derive",
+ "pbkdf2",
+ "rand 0.8.5",
+ "serde",
  "serde_json",
+ "sha2 0.10.7",
  "tracing-subscriber",
  "zeroize",
 ]

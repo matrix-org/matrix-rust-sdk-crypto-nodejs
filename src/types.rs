@@ -1,5 +1,11 @@
 use std::collections::HashMap;
 
+use matrix_sdk_crypto::backups::{
+    SignatureState as InnerSignatureState, SignatureVerification as InnerSignatureVerification,
+};
+use napi::bindgen_prelude::{FromNapiValue, ToNapiValue};
+use serde::{Deserialize, Serialize};
+
 use napi_derive::*;
 
 use crate::{
@@ -78,6 +84,12 @@ impl Signatures {
     pub fn count(&self) -> usize {
         self.inner.signature_count()
     }
+
+    /// Get the json with all signatures
+    #[napi(strict, js_name = "asJSONString")]
+    pub fn as_json(&self) -> String {
+        serde_json::to_string(&self.inner).unwrap()
+    }
 }
 
 /// Represents a potentially decoded signature (but not a validated
@@ -153,4 +165,77 @@ impl MaybeSignature {
             Err(signature) => Some(signature.source.clone()),
         }
     }
+}
+
+/// The result of a signature verification of a signed JSON object.
+#[napi]
+pub struct SignatureVerification {
+    pub(crate) inner: InnerSignatureVerification,
+}
+
+/// The result of a signature check.
+#[napi]
+pub enum SignatureState {
+    /// The signature is missing.
+    Missing = 0,
+    /// The signature is invalid.
+    Invalid = 1,
+    /// The signature is valid but the device or user identity that created the
+    /// signature is not trusted.
+    ValidButNotTrusted = 2,
+    /// The signature is valid and the device or user identity that created the
+    /// signature is trusted.
+    ValidAndTrusted = 3,
+}
+
+impl From<InnerSignatureState> for SignatureState {
+    fn from(val: InnerSignatureState) -> Self {
+        match val {
+            InnerSignatureState::Missing => SignatureState::Missing,
+            InnerSignatureState::Invalid => SignatureState::Invalid,
+            InnerSignatureState::ValidButNotTrusted => SignatureState::ValidButNotTrusted,
+            InnerSignatureState::ValidAndTrusted => SignatureState::ValidAndTrusted,
+        }
+    }
+}
+
+#[napi]
+impl SignatureVerification {
+    /// Give the backup signature state from the current device.
+    /// See SignatureState for values
+    #[napi(getter)]
+    pub fn device_state(&self) -> SignatureState {
+        self.inner.device_signature.into()
+    }
+
+    /// Give the backup signature state from the current user identity.
+    /// See SignatureState for values
+    #[napi(getter)]
+    pub fn user_state(&self) -> SignatureState {
+        self.inner.user_identity_signature.into()
+    }
+}
+
+/// Struct holding the number of room keys we have.
+#[derive(Debug, Serialize, Deserialize)]
+#[napi(object)]
+pub struct RoomKeyCounts {
+    /// The total number of room keys.
+    pub total: i64,
+    /// The number of backed up room keys.
+    #[serde(rename = "backedUp")]
+    pub backed_up: i64,
+}
+
+/// The backup recovery key has saved by sdk
+#[derive(Debug, Serialize, Deserialize)]
+#[napi(object)]
+pub struct BackupKeys {
+    /// The total number of room keys.
+    #[serde(rename = "recoveryKeyBase58")]
+    #[napi(js_name = "recoveryKeyBase58")]
+    pub recovery_key: Option<String>,
+    /// The number of backed up room keys.
+    #[serde(rename = "backupVersion")]
+    pub backup_version: Option<String>,
 }
