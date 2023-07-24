@@ -8,15 +8,16 @@ use std::{
 };
 
 use matrix_sdk_common::ruma::{serde::Raw, DeviceKeyAlgorithm, OwnedTransactionId, UInt};
-use matrix_sdk_crypto::{backups::MegolmV1BackupKey, store::RecoveryKey, types::RoomKeyBackupInfo};
+use matrix_sdk_crypto::{backups::MegolmV1BackupKey, types::RoomKeyBackupInfo};
 use napi::bindgen_prelude::{within_runtime_if_available, Either7, FromNapiValue, ToNapiValue};
 use napi_derive::*;
 use serde_json::{value::RawValue, Value as JsonValue};
 use zeroize::Zeroize;
 
 use crate::{
+    backup::{BackupDecryptionKey, BackupKeys, RoomKeyCounts},
     encryption, identifiers, into_err, olm, requests, responses, responses::response_from_string,
-    sync_events, types::{self, BackupKeys, RoomKeyCounts, SignatureVerification}, vodozemac,
+    sync_events, types::{self, SignatureVerification}, vodozemac,
 };
 
 /// The value used by the `OlmMachine` JS class.
@@ -475,29 +476,26 @@ impl OlmMachine {
         self.inner.sign(message.as_str()).await.into()
     }
 
-    /// Store the recovery key in the crypto store.
+    /// Store the backup decryption key in the crypto store.
     ///
     /// This is useful if the client wants to support gossiping of the backup
     /// key.
-    #[napi(strict, js_name = "saveBackupRecoveryKey")]
-    pub async fn save_recovery_key(
+    #[napi(strict)]
+    pub async fn save_backup_decryption_key(
         &self,
-        recovery_key_base_58: String,
+        decryption_key: &BackupDecryptionKey,
         version: String,
     ) -> napi::Result<()> {
-        let key = RecoveryKey::from_base58(&recovery_key_base_58).map_err(into_err)?;
-
-        self.inner.backup_machine().save_recovery_key(Some(key), Some(version)).await.map_err(into_err)?;
-
+        self.inner.backup_machine().save_decryption_key(Some(decryption_key.inner.clone()), Some(version)).await.map_err(into_err)?;
         Ok(())
     }
 
-    /// Get the backup keys we have saved in our crypto store.
+    /// Get the backup keys we have saved in our store.
     #[napi]
     pub async fn get_backup_keys(&self) -> napi::Result<BackupKeys> {
         let inner = self.inner.backup_machine().get_backup_keys().await.map_err(into_err)?;
         Ok(BackupKeys {
-            recovery_key: inner.recovery_key.map(|k| k.to_base58()),
+            decryption_key_base64: inner.decryption_key.map(|k| k.to_base64()),
             backup_version: inner.backup_version,
         })
     }
@@ -549,8 +547,8 @@ impl OlmMachine {
     ///
     /// This returns true if we have an active `BackupKey` and backup version
     /// registered with the state machine.
-    #[napi(js_name = "isBackupEnabled")]
-    pub async fn backup_enabled(&self) -> bool {
+    #[napi]
+    pub async fn is_backup_enabled(&self) -> bool {
         self.inner.backup_machine().enabled().await
     }
 
@@ -603,11 +601,7 @@ impl OlmMachine {
     /// Get the number of backed up room keys and the total number of room keys.
     #[napi]
     pub async fn room_key_counts(&self) -> napi::Result<RoomKeyCounts> {
-        let inner = self.inner.backup_machine().room_key_counts().await.map_err(into_err)?;
-        Ok(RoomKeyCounts {
-            total: inner.total.try_into().map_err(into_err)?,
-            backed_up: inner.backed_up.try_into().map_err(into_err)?,
-        })
+        Ok(self.inner.backup_machine().room_key_counts().await.map_err(into_err)?.into())
     }
 
     /// Shut down the `OlmMachine`.
