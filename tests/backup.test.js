@@ -1,4 +1,4 @@
-const { BackupRecoveryKey } = require("../");
+const { BackupDecryptionKey } = require("../");
 
 const aMegolmKey = {
     algorithm: "m.megolm.v1.aes-sha2",
@@ -21,9 +21,9 @@ const encryptedMegolm = {
     },
 };
 
-describe("BackupRecoveryKey", () => {
+describe("BackupDecryptionKey", () => {
     test("create from base64 string", () => {
-        const backupkey = BackupRecoveryKey.fromBase64("Ha9cklU/9NqFo9WKdVfGzmqUL/9wlkdxfEitbSIPVXw");
+        const backupkey = BackupDecryptionKey.fromBase64("Ha9cklU/9NqFo9WKdVfGzmqUL/9wlkdxfEitbSIPVXw");
 
         const decrypted = JSON.parse(
             backupkey.decryptV1(
@@ -38,34 +38,9 @@ describe("BackupRecoveryKey", () => {
         expect(decrypted.session_key).toStrictEqual(aMegolmKey.session_key);
     });
 
-    test("create export and import base58", () => {
-        const backupkey = BackupRecoveryKey.fromBase64("Ha9cklU/9NqFo9WKdVfGzmqUL/9wlkdxfEitbSIPVXw");
-        const base58 = backupkey.toBase58();
-        const imported = BackupRecoveryKey.fromBase58(base58);
-
-        expect(backupkey.megolmV1PublicKey.publicKeyBase64).toStrictEqual(imported.megolmV1PublicKey.publicKeyBase64);
-    });
-
-    test("with passphrase", () => {
-        const recoveryKey = BackupRecoveryKey.newFromPassphrase("aSecretPhrase");
-
-        expect(recoveryKey.megolmV1PublicKey.passphraseInfo).toBeDefined();
-        expect(recoveryKey.megolmV1PublicKey.passphraseInfo.privateKeyIterations).toStrictEqual(500000);
-    });
-
     test("errors", () => {
         expect(() => {
-            BackupRecoveryKey.fromBase64("notBase64");
-        }).toThrow();
-
-        const wrongKey = BackupRecoveryKey.newFromPassphrase("aSecretPhrase");
-
-        expect(() => {
-            wrongKey.decryptV1(
-                encryptedMegolm.session_data.ephemeral,
-                encryptedMegolm.session_data.mac,
-                encryptedMegolm.session_data.ciphertext,
-            );
+            BackupDecryptionKey.fromBase64("notBase64");
         }).toThrow();
     });
 });

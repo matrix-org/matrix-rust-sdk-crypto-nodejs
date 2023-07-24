@@ -1229,7 +1229,6 @@ dependencies = [
 name = "matrix-sdk-crypto-nodejs"
 version = "0.6.0"
 dependencies = [
- "hmac",
  "http",
  "matrix-sdk-common",
  "matrix-sdk-crypto",
@@ -1237,11 +1236,7 @@ dependencies = [
  "napi",
  "napi-build",
  "napi-derive",
- "pbkdf2",
- "rand 0.8.5",
- "serde",
  "serde_json",
- "sha2 0.10.7",
  "tracing-subscriber",
  "zeroize",
 ]

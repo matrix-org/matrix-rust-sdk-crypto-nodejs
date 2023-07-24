@@ -4,12 +4,12 @@ use matrix_sdk_crypto::backups::{
     SignatureState as InnerSignatureState, SignatureVerification as InnerSignatureVerification,
 };
 use napi::bindgen_prelude::{FromNapiValue, ToNapiValue};
-use serde::{Deserialize, Serialize};
 
 use napi_derive::*;
 
 use crate::{
     identifiers::{DeviceKeyId, UserId},
+    into_err,
     vodozemac::Ed25519Signature,
 };
 
@@ -86,9 +86,9 @@ impl Signatures {
     }
 
     /// Get the json with all signatures
-    #[napi(strict, js_name = "asJSONString")]
-    pub fn as_json(&self) -> String {
-        serde_json::to_string(&self.inner).unwrap()
+    #[napi(js_name = "asJSON")]
+    pub fn as_json(&self) -> napi::Result<String> {
+        Ok(serde_json::to_string(&self.inner).map_err(into_err)?.into())
     }
 }
 
@@ -169,12 +169,14 @@ impl MaybeSignature {
 
 /// The result of a signature verification of a signed JSON object.
 #[napi]
+#[derive(Debug)]
 pub struct SignatureVerification {
     pub(crate) inner: InnerSignatureVerification,
 }
 
 /// The result of a signature check.
 #[napi]
+#[derive(Debug)]
 pub enum SignatureState {
     /// The signature is missing.
     Missing = 0,
@@ -214,28 +216,4 @@ impl SignatureVerification {
     pub fn user_state(&self) -> SignatureState {
         self.inner.user_identity_signature.into()
     }
-}
-
-/// Struct holding the number of room keys we have.
-#[derive(Debug, Serialize, Deserialize)]
-#[napi(object)]
-pub struct RoomKeyCounts {
-    /// The total number of room keys.
-    pub total: i64,
-    /// The number of backed up room keys.
-    #[serde(rename = "backedUp")]
-    pub backed_up: i64,
-}
-
-/// The backup recovery key has saved by sdk
-#[derive(Debug, Serialize, Deserialize)]
-#[napi(object)]
-pub struct BackupKeys {
-    /// The total number of room keys.
-    #[serde(rename = "recoveryKeyBase58")]
-    #[napi(js_name = "recoveryKeyBase58")]
-    pub recovery_key: Option<String>,
-    /// The number of backed up room keys.
-    #[serde(rename = "backupVersion")]
-    pub backup_version: Option<String>,
 }
