@@ -16,8 +16,11 @@ use zeroize::Zeroize;
 
 use crate::{
     backup::{BackupDecryptionKey, BackupKeys, RoomKeyCounts},
-    encryption, identifiers, into_err, olm, requests, responses, responses::response_from_string,
-    sync_events, types::{self, SignatureVerification}, vodozemac,
+    encryption, identifiers, into_err, olm, requests, responses,
+    responses::response_from_string,
+    sync_events,
+    types::{self, SignatureVerification},
+    vodozemac,
 };
 
 /// The value used by the `OlmMachine` JS class.
@@ -486,7 +489,11 @@ impl OlmMachine {
         decryption_key: &BackupDecryptionKey,
         version: String,
     ) -> napi::Result<()> {
-        self.inner.backup_machine().save_decryption_key(Some(decryption_key.inner.clone()), Some(version)).await.map_err(into_err)?;
+        self.inner
+            .backup_machine()
+            .save_decryption_key(Some(decryption_key.inner.clone()), Some(version))
+            .await
+            .map_err(into_err)?;
         Ok(())
     }
 
@@ -517,10 +524,17 @@ impl OlmMachine {
     /// ```
     #[napi(strict)]
     pub async fn verify_backup(&self, backup_info: String) -> napi::Result<SignatureVerification> {
-        let backup_info: RoomKeyBackupInfo = serde_json::from_str(backup_info.as_str()).map_err(into_err)?;
+        let backup_info: RoomKeyBackupInfo =
+            serde_json::from_str(backup_info.as_str()).map_err(into_err)?;
 
-        let result = self.inner.backup_machine().verify_backup(backup_info, false).await.map_err(into_err)?;
-        Ok(SignatureVerification { inner: result })
+        Ok(SignatureVerification {
+            inner: self
+                .inner
+                .backup_machine()
+                .verify_backup(backup_info, false)
+                .await
+                .map_err(into_err)?,
+        })
     }
 
     /// Activate the given backup key to be used with the given backup version.
@@ -589,10 +603,7 @@ impl OlmMachine {
             .map_err(into_err)?
             .map(requests::OutgoingRequest)
         {
-            Some(r) => Ok(Some(
-                requests::OutgoingRequests::try_from(r)
-                .map_err(into_err)?,
-            )),
+            Some(r) => Ok(Some(requests::OutgoingRequests::try_from(r).map_err(into_err)?)),
 
             None => Ok(None),
         }
