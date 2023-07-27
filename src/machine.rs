@@ -581,29 +581,21 @@ impl OlmMachine {
     #[napi]
     pub async fn backup_room_keys(
         &self,
-    ) -> napi::Result<
-        Option<
-            // TODO Reduce this to just requests::KeysBackupRequest if appropriate
-            Either7<
-                requests::KeysUploadRequest,
-                requests::KeysQueryRequest,
-                requests::KeysClaimRequest,
-                requests::ToDeviceRequest,
-                requests::SignatureUploadRequest,
-                requests::RoomMessageRequest,
-                requests::KeysBackupRequest,
-            >,
-        >,
-    > {
+    ) -> napi::Result<Option<requests::KeysBackupRequest>> {
         match self
             .inner
             .backup_machine()
             .backup()
             .await
             .map_err(into_err)?
-            .map(requests::OutgoingRequest)
         {
-            Some(r) => Ok(Some(requests::OutgoingRequests::try_from(r).map_err(into_err)?)),
+            Some((transaction_id, keys_backup_request)) => Ok(Some(
+                requests::KeysBackupRequest::try_from((
+                    transaction_id.to_string(),
+                    &keys_backup_request,
+                ))
+                .map_err(into_err)?,
+            )),
 
             None => Ok(None),
         }
