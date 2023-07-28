@@ -579,16 +579,8 @@ impl OlmMachine {
     /// Encrypt a batch of room keys and return a request that needs to be sent
     /// out to backup the room keys.
     #[napi]
-    pub async fn backup_room_keys(
-        &self,
-    ) -> napi::Result<Option<requests::KeysBackupRequest>> {
-        match self
-            .inner
-            .backup_machine()
-            .backup()
-            .await
-            .map_err(into_err)?
-        {
+    pub async fn backup_room_keys(&self) -> napi::Result<Option<requests::KeysBackupRequest>> {
+        match self.inner.backup_machine().backup().await.map_err(into_err)? {
             Some((transaction_id, keys_backup_request)) => Ok(Some(
                 requests::KeysBackupRequest::try_from((
                     transaction_id.to_string(),
