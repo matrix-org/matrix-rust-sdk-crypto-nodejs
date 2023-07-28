@@ -1,5 +1,9 @@
 # Matrix-Rust-SDK Node.js Bindings
 
+## unreleased
+
+-   Expose bindings for secure key backup.
+
 ## 0.1.0-beta.1 - 2022-07-14
 
 -   Fixing broken download link, [#842](https://github.com/matrix-org/matrix-rust-sdk/issues/842)
