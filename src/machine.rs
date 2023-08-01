@@ -466,6 +466,16 @@ impl OlmMachine {
     /// between all the devices.
     ///
     /// Uploading these keys will require user interactive auth.
+    ///
+    /// # Arguments
+    ///
+    /// * `reset`, whether the method should create a new identity or use the
+    ///   existing one during the request. If set to true, the request will
+    ///   attempt to upload a new identity. If set to false, the request will
+    ///   attempt to upload the existing identity. Since the uploading process
+    ///   requires user interactive authentication, which involves sending out
+    ///   the same request multiple times, setting this argument to false
+    ///   enables you to reuse the same request.
     #[napi]
     pub async fn bootstrap_cross_signing(&self, reset: bool) -> napi::Result<()> {
         self.inner.bootstrap_cross_signing(reset).await.map_err(into_err)?;
