@@ -1,8 +1,29 @@
 # Matrix-Rust-SDK Node.js Bindings
 
-## unreleased
+## 0.1.0-beta.7 - 2023-08-01
 
--   Expose bindings for secure key backup.
+-   Expose bindings for secure key backup. [#7](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/7)
+
+## 0.1.0-beta.6 - 2023-04-26
+
+-   Update supported Node.js versions. [#1822](https://github.com/matrix-org/matrix-rust-sdk/pull/1822)
+-   Various bug fixes and improvements.
+
+## 0.1.0-beta.5 - 2023-04-24
+
+-   Build Node bindings against Ubuntu 20.04. [#1819](https://github.com/matrix-org/matrix-rust-sdk/pull/1819)
+-   Various bug fixes and improvements.
+
+## 0.1.0-beta.4 - 2023-04-14
+
+-   Support a new sqlite storage type. [#1521](https://github.com/matrix-org/matrix-rust-sdk/pull/1521)
+-   Various bug fixes and improvements.
+
+## 0.1.0-beta.3 - 2022-11-03
+
+-   [Fix the pre-built downloading script for Node.js 19.](https://github.com/matrix-org/matrix-rust-sdk/pull/1164)
+
+## 0.1.0-beta.2 - 2022-09-28
 
 ## 0.1.0-beta.1 - 2022-07-14
 

@@ -10,14 +10,14 @@ name: Prepare Crypto-Node.js Release
 #    2. commit that change together with the changelog (if it changed, see below)
 #    3. create the appropriate tag on that commit
 #    4. create the Github draft release, including the changes (if given, see below)
-#    5. push these to a new branch, including tag, triggering the `release-crypto-nodejs` workflow
+#    5. push these to a new branch, including tag, triggering the `release` workflow
 #    6. create a PR to merge these back into `main`
 #
 #  Additionally, if you provide a tag to comapare this tag to, this will:
 #    1. create a changelog between the two releases, used for the github release
 #    2. update the Changelog.md and include it in the commit
 #
-#  The remaining tasks are done by the release-crypto-nodejs workflow.
+#  The remaining tasks are done by the `release` workflow.
 
 on:
   workflow_dispatch:
@@ -105,7 +105,7 @@ jobs:
 
   trigger-release:
     # and trigger the tagging release workflow
-    uses: ./.github/workflows/release-crypto-nodejs.yml
+    uses: ./.github/workflows/release.yml
     needs: ['prepare-release']
     name: "Trigger release Workflow"
     with:
