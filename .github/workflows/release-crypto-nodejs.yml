@@ -126,7 +126,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           draft: true
-          files: *tgz
+          files: *.tgz
       - name: Publish to npmjs.com
         uses: JS-DevTools/npm-publish@v1
         with:
