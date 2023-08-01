@@ -19,7 +19,7 @@ env:
 on:
   push:
     tags:
-      - matrix-sdk-crypto-nodejs-v[0-9]+.*
+      - v[0-9]+.*
   workflow_call:
     inputs:
       tag:
@@ -126,7 +126,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           draft: true
-          files: *.tgz
+          files: *tgz
       - name: Publish to npmjs.com
         uses: JS-DevTools/npm-publish@v1
         with:
