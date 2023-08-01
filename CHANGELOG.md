@@ -1,5 +1,9 @@
 # Matrix-Rust-SDK Node.js Bindings
 
+## 0.1.0-beta.8 - 2023-08-01
+
+-   Don't skip downloading the native library when installing from npm.
+
 ## 0.1.0-beta.7 - 2023-08-01
 
 -   Expose bindings for secure key backup. [#7](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/7)
