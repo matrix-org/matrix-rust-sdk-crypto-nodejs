@@ -120,7 +120,7 @@ jobs:
       - name: Build lib
         run: |
           npm install --ignore-scripts
-          npm run build
+          npm run release-build
           npm pack
       - name: Upload npm package to release
         uses: softprops/action-gh-release@v1
