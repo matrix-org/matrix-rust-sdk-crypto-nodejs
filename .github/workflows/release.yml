@@ -96,7 +96,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           draft: true
-          files: *.node
+          files: "*.node"
 
   publish-nodejs-package:
     name: "Package nodejs package"
@@ -126,7 +126,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           draft: true
-          files: *.tgz
+          files: "*.tgz"
       - name: Publish to npmjs.com
         uses: JS-DevTools/npm-publish@v2
         with:
