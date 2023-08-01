@@ -128,7 +128,7 @@ jobs:
           draft: true
           files: *.tgz
       - name: Publish to npmjs.com
-        uses: JS-DevTools/npm-publish@v1
+        uses: JS-DevTools/npm-publish@v2
         with:
           package: package.json
           access: public
