@@ -8,7 +8,7 @@ name: Release Crypto-Node.js
 # package the npm tar.gz and uploads that to the Github Release tag as well, before publishing
 # it to npmjs.com automatically.
 #
-# The usual way to trigger this is by manually triggering the `prep-crypto-nodejs-release`
+# The usual way to trigger this is by manually triggering the `prep-release`
 # workflow. See its documentation for instructions how to use it.
 
 env:
