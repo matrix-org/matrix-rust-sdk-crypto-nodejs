@@ -1,7 +1,11 @@
 const { HttpsProxyAgent } = require("https-proxy-agent");
 const { DownloaderHelper } = require("node-downloader-helper");
 const { version } = require("./package.json");
-const { platform, arch } = process;
+
+// Get the platform and architecture based on environment variables,
+// falling back to the current platform and architecture
+const platform = process.env.npm_config_target_platform || process.env.npm_config_platform || process.platform;
+const arch = process.env.npm_config_target_arch || process.env.npm_config_arch || process.arch;
 
 const DOWNLOADS_BASE_URL = "https://github.com/matrix-org/matrix-rust-sdk/releases/download";
 const CURRENT_VERSION = `matrix-sdk-crypto-nodejs-v${version}`;
