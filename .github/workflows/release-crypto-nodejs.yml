@@ -70,20 +70,21 @@ jobs:
       # use the given tag
       - uses: actions/checkout@v3
         name: "Checking out ${{ inputs.tag }}"
-        if: inputs.tag
+        if: "${{ inputs.tag }}"
         with:
-          ref: "${{ inputs.tag }}"
+          ref: ${{ inputs.tag }}
       # use the default
       - uses: actions/checkout@v3
-        if: "!inputs.tag"
+        if: "${{ !inputs.tag }}"
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@master
+        uses: dtolnay/rust-toolchain@nightly
         with:
-          toolchain: nightly-2023-07-03
           targets: ${{ matrix.target }}
       - name: Install Node.js
         uses: actions/setup-node@v3
-      - if: matrix.apt_install
+      - name: Load cache
+        uses: Swatinem/rust-cache@v2
+      - if: ${{ matrix.apt_install }}
         run: |
           sudo apt-get update
           sudo apt-get install -y ${{ matrix.apt_install }}
@@ -95,7 +96,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           draft: true
-          files: "*.node"
+          files: *.node
 
   publish-nodejs-package:
     name: "Package nodejs package"
@@ -106,16 +107,14 @@ jobs:
       # use the given tag
       - uses: actions/checkout@v3
         name: "Checking out ${{ inputs.tag }}"
-        if: inputs.tag
+        if: "${{ inputs.tag }}"
         with:
           ref: ${{ inputs.tag }}
       # use the default
       - uses: actions/checkout@v3
-        if: "!inputs.tags"
+        if: "${{ !inputs.tag }}"
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: nightly-2023-07-03
+        uses: dtolnay/rust-toolchain@nightly
       - name: Install Node.js
         uses: actions/setup-node@v3
       - name: Build lib
@@ -127,10 +126,10 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           draft: true
-          files: "*tgz"
+          files: *.tgz
       - name: Publish to npmjs.com
         uses: JS-DevTools/npm-publish@v1
         with:
-          package: "package.json"
+          package: package.json
           access: public
           token: ${{ secrets.NPM_TOKEN }}
