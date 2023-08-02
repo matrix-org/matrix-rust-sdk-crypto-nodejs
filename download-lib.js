@@ -7,8 +7,8 @@ const { version } = require("./package.json");
 const platform = process.env.npm_config_target_platform || process.env.npm_config_platform || process.platform;
 const arch = process.env.npm_config_target_arch || process.env.npm_config_arch || process.arch;
 
-const DOWNLOADS_BASE_URL = "https://github.com/matrix-org/matrix-rust-sdk/releases/download";
-const CURRENT_VERSION = `matrix-sdk-crypto-nodejs-v${version}`;
+const DOWNLOADS_BASE_URL = "https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/releases/download";
+const CURRENT_VERSION = `v${version}`;
 
 const byteHelper = function (value) {
     if (value === 0) {
