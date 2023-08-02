@@ -133,3 +133,4 @@ jobs:
           package: package.json
           access: public
           token: ${{ secrets.NPM_TOKEN }}
+          ignore-scripts: false
