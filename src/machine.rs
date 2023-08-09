@@ -384,20 +384,19 @@ impl OlmMachine {
         room_id: &identifiers::RoomId,
         users: Vec<&identifiers::UserId>,
         encryption_settings: &encryption::EncryptionSettings,
-    ) -> napi::Result<String> {
+    ) -> napi::Result<Vec<requests::ToDeviceRequest>> {
         let room_id = room_id.inner.clone();
         let users = users.into_iter().map(|user| user.inner.clone()).collect::<Vec<_>>();
         let encryption_settings =
             matrix_sdk_crypto::olm::EncryptionSettings::from(encryption_settings);
 
-        serde_json::to_string(
-            &self
-                .inner
-                .share_room_key(&room_id, users.iter().map(AsRef::as_ref), encryption_settings)
-                .await
-                .map_err(into_err)?,
-        )
-        .map_err(into_err)
+        self.inner
+            .share_room_key(&room_id, users.iter().map(AsRef::as_ref), encryption_settings)
+            .await
+            .map_err(into_err)?
+            .into_iter()
+            .map(|td| requests::ToDeviceRequest::try_from(td.deref()))
+            .collect()
     }
 
     /// Encrypt a JSON-encoded content for the given room.
