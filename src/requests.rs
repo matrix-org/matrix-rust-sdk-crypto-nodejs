@@ -246,6 +246,19 @@ macro_rules! request {
         $( extracts $( $field_name:ident : $field_type:tt ),+ $(,)? )?
         $( $( and )? groups $( $grouped_field_name:ident $( { $grouped_field_transformation:expr } )? ),+ $(,)? )?
     ) => {
+        impl TryFrom<&$source_request> for $destination_request {
+            type Error = napi::Error;
+
+            fn try_from(request: &$source_request) -> Result<Self, Self::Error> {
+                request!(
+                    @__try_from $destination_request from $source_request
+                    (request_id = String::new(), request = request)
+                    $( extracts [ $( $field_name : $field_type, )+ ] )?
+                    $( groups [ $( $grouped_field_name $( { $grouped_field_transformation } )? , )+ ] )?
+                )
+            }
+        }
+
         impl TryFrom<(String, &$source_request)> for $destination_request {
             type Error = napi::Error;
 
