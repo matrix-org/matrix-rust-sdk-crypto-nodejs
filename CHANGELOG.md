@@ -1,5 +1,9 @@
 # Matrix-Rust-SDK Node.js Bindings
 
+## unreleased
+
+-   Return `ToDeviceRequest` objects from `OlmMachine.share_room_key`. [#15](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/15)
+
 ## 0.1.0-beta.9 - 2023-08-02
 
 -   Update URL & tag in pre-built download script. [#13](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/13)
