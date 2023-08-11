@@ -1236,7 +1236,7 @@ dependencies = [
 
 [[package]]
 name = "matrix-sdk-crypto-nodejs"
-version = "0.1.0-beta.9"
+version = "0.0.0"
 dependencies = [
  "http",
  "matrix-sdk-common",

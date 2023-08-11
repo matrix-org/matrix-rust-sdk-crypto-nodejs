@@ -9,7 +9,7 @@ name = "matrix-sdk-crypto-nodejs"
 readme = "README.md"
 repository = "https://github.com/matrix-org/matrix-rust-sdk-nodejs"
 rust-version = "1.70"
-version = "0.1.0-beta.9"
+version = "0.0.0"
 
 [package.metadata.docs.rs]
 rustdoc-args = ["--cfg", "docsrs"]
