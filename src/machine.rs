@@ -614,7 +614,7 @@ impl OlmMachine {
             &self
                 .inner
                 .export_room_keys(|session| {
-                    session.session_id() == session_id && session.room_id().eq(&room_id)
+                    session.session_id() == session_id && session.room_id() == &room_id
                 })
                 .await
                 .map_err(into_err)?,
