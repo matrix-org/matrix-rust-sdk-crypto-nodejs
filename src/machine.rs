@@ -602,6 +602,26 @@ impl OlmMachine {
         }
     }
 
+    /// Export room keys in unencrypted format for a given session_id.
+    /// This currently exports a json blob.
+    #[napi]
+    pub async fn export_room_keys_for_session(
+        &self,
+        room_id: String,
+        session_id: String,
+    ) -> napi::Result<String> {
+        serde_json::to_string(
+            &self
+                .inner
+                .export_room_keys(|session| {
+                    session.session_id() == session_id && session.room_id() == &room_id
+                })
+                .await
+                .map_err(into_err)?,
+        )
+        .map_err(into_err)
+    }
+
     /// Get the number of backed up room keys and the total number of room keys.
     #[napi]
     pub async fn room_key_counts(&self) -> napi::Result<RoomKeyCounts> {
