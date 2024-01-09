@@ -15,6 +15,7 @@ env:
   CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: 'aarch64-linux-gnu-gcc'
   CARGO_TARGET_I686_UNKNOWN_LINUX_GNU_LINKER: 'i686-linux-gnu-gcc'
   CARGO_TARGET_ARM_UNKNOWN_LINUX_GNUEABIHF_LINKER: 'arm-linux-gnueabihf-gcc'
+  CARGO_TARGET_S390X_UNKNOWN_LINUX_GNU_LINKER: 's390x-linux-gnu-gcc'
 
 on:
   push:
@@ -53,6 +54,9 @@ jobs:
           - target: x86_64-unknown-linux-musl
             os: ubuntu-20.04
             apt_install: musl-tools
+          - target: s390x-unknown-linux-gnu
+            os: ubuntu-20.04
+            apt_install: gcc-s390x-linux-gnu g++-s390x-linux-gnu
           # ----------------------------------- macOS
           - target: aarch64-apple-darwin
             os: macos-latest

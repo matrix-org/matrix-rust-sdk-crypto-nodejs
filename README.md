@@ -30,7 +30,7 @@ When installing, NPM will download the corresponding prebuilt Rust library for y
   </thead>
   <tbody>
     <tr>
-      <td rowspan="5">Linux</td>
+      <td rowspan="6">Linux</td>
       <td rowspan="2"><code>aarch</code></td>
       <td><code>aarch64-unknown-linux-gnu</code></td>
       <td>✅</td>
@@ -50,6 +50,11 @@ When installing, NPM will download the corresponding prebuilt Rust library for y
     </tr>
     <tr>
       <td><code>i686-unknown-linux-gnu</code></td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td rowspan="1"><code>s390x</code></td>
+      <td><code>s390x-unknown-linux-gnu</code></td>
       <td>✅</td>
     </tr>
     <tr>
