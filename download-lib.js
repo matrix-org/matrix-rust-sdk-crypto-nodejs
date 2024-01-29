@@ -116,6 +116,9 @@ switch (platform) {
             case "arm":
                 download_lib("matrix-sdk-crypto.linux-arm-gnueabihf.node");
                 break;
+            case "s390x":
+                download_lib("matrix-sdk-crypto.linux-s390x-gnu.node");
+                break;
             default:
                 throw new Error(`Unsupported architecture on Linux: ${arch}`);
         }
