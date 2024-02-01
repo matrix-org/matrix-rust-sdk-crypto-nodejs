@@ -1,4 +1,4 @@
-# Steps for releasing `matrix-sdk-crypto-wasm`
+# Steps for releasing `matrix-rust-sdk-crypto-nodejs`
 
 1. Create a new branch, named `release-v<version>`.
 2. Update `CHANGELOG.md` and `git add` ready for commit on the next step.
