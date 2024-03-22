@@ -1,9 +1,5 @@
-src/
 tests/
 target/
-Cargo.lock
-Cargo.toml
-build.rs
 *.node
 *.tgz
 tsconfig.json
