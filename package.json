@@ -23,7 +23,7 @@
     },
     "scripts": {
         "lint": "prettier --check .",
-        "release-build": "napi build --platform --release --strip",
+        "release-build": "napi build --platform --release --strip --cargo-flags=--locked",
         "build": "napi build --platform",
         "postinstall": "node postinstall.js",
         "test": "jest --verbose --testTimeout 10000",
