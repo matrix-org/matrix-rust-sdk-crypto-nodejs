@@ -20,7 +20,7 @@
         "yargs-parser": "~21.0.1"
     },
     "engines": {
-        "node": ">= 16"
+        "node": ">= 18"
     },
     "scripts": {
         "lint": "prettier --check .",
