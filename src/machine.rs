@@ -136,6 +136,7 @@ impl OlmMachine {
                                 .await
                                 .map(Arc::new)
                                 .map_err(into_err)?,
+                                None,
                             )
                             .await
                         }
