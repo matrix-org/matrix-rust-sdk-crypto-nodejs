@@ -688,17 +688,6 @@ dependencies = [
 
 [[package]]
 name = "http"
-version = "0.2.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bd6effc99afb63425aff9b05836f029929e345a6148a14b7ecd5ab67af944482"
-dependencies = [
- "bytes",
- "fnv",
- "itoa",
-]
-
-[[package]]
-name = "http"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "21b9ddb458710bc376481b842f5da65cdf31522de232c1ca8146abce2a358258"
@@ -1001,7 +990,7 @@ name = "matrix-sdk-crypto-nodejs"
 version = "0.0.0"
 dependencies = [
  "ahash",
- "http 0.2.9",
+ "http",
  "matrix-sdk-common",
  "matrix-sdk-crypto",
  "matrix-sdk-sqlite",
@@ -1504,7 +1493,7 @@ dependencies = [
  "assign",
  "bytes",
  "date_header",
- "http 1.1.0",
+ "http",
  "js_int",
  "js_option",
  "maplit",
@@ -1528,7 +1517,7 @@ dependencies = [
  "bytes",
  "form_urlencoded",
  "getrandom",
- "http 1.1.0",
+ "http",
  "indexmap",
  "js-sys",
  "js_int",

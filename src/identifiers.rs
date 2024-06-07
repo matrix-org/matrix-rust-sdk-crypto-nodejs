@@ -218,18 +218,6 @@ impl RoomId {
         Ok(Self::from(ruma::RoomId::parse(id).map_err(into_err)?))
     }
 
-    /// Returns the user's localpart.
-    #[napi(getter)]
-    pub fn localpart(&self) -> String {
-        self.inner.localpart().to_owned()
-    }
-
-    /// Returns the server name of the room ID.
-    #[napi(getter)]
-    pub fn server_name(&self) -> ServerName {
-        ServerName { inner: self.inner.server_name().to_owned() }
-    }
-
     /// Return the room ID as a string.
     #[napi]
     #[allow(clippy::inherent_to_string)]

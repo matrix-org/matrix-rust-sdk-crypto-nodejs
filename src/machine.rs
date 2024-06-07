@@ -12,7 +12,7 @@ use matrix_sdk_common::ruma::events::AnyToDeviceEvent;
 use matrix_sdk_crypto::{backups::MegolmV1BackupKey, types::RoomKeyBackupInfo, EncryptionSyncChanges};
 use napi::bindgen_prelude::{within_runtime_if_available, Either7, FromNapiValue, ToNapiValue};
 use napi_derive::*;
-use serde_json::{value::RawValue, Value as JsonValue};
+use serde_json::value::RawValue;
 use zeroize::Zeroize;
 
 use crate::{
@@ -423,16 +423,12 @@ impl OlmMachine {
         content: String,
     ) -> napi::Result<String> {
         let room_id = room_id.inner.clone();
-        let content: JsonValue = serde_json::from_str(content.as_str()).map_err(into_err)?;
-
+        let content = serde_json::from_str(content.as_str()).map_err(into_err)?;
+        let me = self.inner.clone();
+        let data = &me.encrypt_room_event_raw(&room_id, event_type.as_ref(), &content).await.map_err(into_err)?;
         serde_json::to_string(
-            &self
-                .inner
-                .encrypt_room_event_raw(&room_id, content, event_type.as_ref())
-                .await
-                .map_err(into_err)?,
-        )
-        .map_err(into_err)
+            data
+        ).map_err(into_err)
     }
 
     /// Decrypt an event from a room timeline.
@@ -491,8 +487,9 @@ impl OlmMachine {
     /// Sign the given message using our device key and if available
     /// cross-signing master key.
     #[napi(strict)]
-    pub async fn sign(&self, message: String) -> types::Signatures {
-        self.inner.sign(message.as_str()).await.into()
+    pub async fn sign(&self, message: String) -> napi::Result<types::Signatures> {
+        let signed = self.inner.sign(message.as_str()).await.map_err(into_err)?;
+        Ok(signed.into())
     }
 
     /// Store the backup decryption key in the crypto store.
