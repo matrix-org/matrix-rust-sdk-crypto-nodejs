@@ -40,13 +40,15 @@ dependencies = [
 
 [[package]]
 name = "ahash"
-version = "0.8.3"
+version = "0.8.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2c99f64d1e06488f620f932677e24bc6e2897582980441ae90a671415bd7ec2f"
+checksum = "e89da841a80418a9b391ebaea17f5c112ffaaa96f621d2c285b5174da76b9011"
 dependencies = [
  "cfg-if",
+ "getrandom",
  "once_cell",
  "version_check",
+ "zerocopy",
 ]
 
 [[package]]
@@ -773,15 +775,6 @@ dependencies = [
 
 [[package]]
 name = "itertools"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1c173a5686ce8bfa551b3563d0c2170bf24ca44da99c7ca4bfdab5418c3fe57"
-dependencies = [
- "either",
-]
-
-[[package]]
-name = "itertools"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ba291022dbbd398a455acf126c1e341954079855bc60dfdda641363bd6922569"
@@ -922,7 +915,7 @@ dependencies = [
 [[package]]
 name = "matrix-sdk-base"
 version = "0.7.0"
-source = "git+https://github.com/matrix-org/matrix-rust-sdk?rev=eddaf961a1256cd57ca1656208a7ef55c70fba0a#eddaf961a1256cd57ca1656208a7ef55c70fba0a"
+source = "git+https://github.com/matrix-org/matrix-rust-sdk?rev=931c5649420adb071caf1abafc7964758487e472#931c5649420adb071caf1abafc7964758487e472"
 dependencies = [
  "as_variant",
  "async-trait",
@@ -944,7 +937,7 @@ dependencies = [
 [[package]]
 name = "matrix-sdk-common"
 version = "0.7.0"
-source = "git+https://github.com/matrix-org/matrix-rust-sdk?rev=eddaf961a1256cd57ca1656208a7ef55c70fba0a#eddaf961a1256cd57ca1656208a7ef55c70fba0a"
+source = "git+https://github.com/matrix-org/matrix-rust-sdk?rev=931c5649420adb071caf1abafc7964758487e472#931c5649420adb071caf1abafc7964758487e472"
 dependencies = [
  "async-trait",
  "futures-core",
@@ -966,7 +959,7 @@ dependencies = [
 [[package]]
 name = "matrix-sdk-crypto"
 version = "0.7.1"
-source = "git+https://github.com/matrix-org/matrix-rust-sdk?rev=eddaf961a1256cd57ca1656208a7ef55c70fba0a#eddaf961a1256cd57ca1656208a7ef55c70fba0a"
+source = "git+https://github.com/matrix-org/matrix-rust-sdk?rev=931c5649420adb071caf1abafc7964758487e472#931c5649420adb071caf1abafc7964758487e472"
 dependencies = [
  "aes",
  "as_variant",
@@ -981,7 +974,7 @@ dependencies = [
  "futures-util",
  "hkdf",
  "hmac",
- "itertools 0.12.1",
+ "itertools",
  "js_option",
  "matrix-sdk-common",
  "matrix-sdk-qrcode",
@@ -1007,6 +1000,7 @@ dependencies = [
 name = "matrix-sdk-crypto-nodejs"
 version = "0.0.0"
 dependencies = [
+ "ahash",
  "http 0.2.9",
  "matrix-sdk-common",
  "matrix-sdk-crypto",
@@ -1022,7 +1016,7 @@ dependencies = [
 [[package]]
 name = "matrix-sdk-qrcode"
 version = "0.7.0"
-source = "git+https://github.com/matrix-org/matrix-rust-sdk?rev=eddaf961a1256cd57ca1656208a7ef55c70fba0a#eddaf961a1256cd57ca1656208a7ef55c70fba0a"
+source = "git+https://github.com/matrix-org/matrix-rust-sdk?rev=931c5649420adb071caf1abafc7964758487e472#931c5649420adb071caf1abafc7964758487e472"
 dependencies = [
  "byteorder",
  "qrcode",
@@ -1034,11 +1028,11 @@ dependencies = [
 [[package]]
 name = "matrix-sdk-sqlite"
 version = "0.7.0"
-source = "git+https://github.com/matrix-org/matrix-rust-sdk?rev=eddaf961a1256cd57ca1656208a7ef55c70fba0a#eddaf961a1256cd57ca1656208a7ef55c70fba0a"
+source = "git+https://github.com/matrix-org/matrix-rust-sdk?rev=931c5649420adb071caf1abafc7964758487e472#931c5649420adb071caf1abafc7964758487e472"
 dependencies = [
  "async-trait",
  "deadpool-sqlite",
- "itertools 0.12.1",
+ "itertools",
  "matrix-sdk-base",
  "matrix-sdk-crypto",
  "matrix-sdk-store-encryption",
@@ -1056,7 +1050,7 @@ dependencies = [
 [[package]]
 name = "matrix-sdk-store-encryption"
 version = "0.7.0"
-source = "git+https://github.com/matrix-org/matrix-rust-sdk?rev=eddaf961a1256cd57ca1656208a7ef55c70fba0a#eddaf961a1256cd57ca1656208a7ef55c70fba0a"
+source = "git+https://github.com/matrix-org/matrix-rust-sdk?rev=931c5649420adb071caf1abafc7964758487e472#931c5649420adb071caf1abafc7964758487e472"
 dependencies = [
  "base64",
  "blake3",
@@ -1355,7 +1349,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "81bddcdb20abf9501610992b6759a4c888aef7d1a7247ef75e2404275ac24af1"
 dependencies = [
  "anyhow",
- "itertools 0.11.0",
+ "itertools",
  "proc-macro2",
  "quote",
  "syn 2.0.66",
@@ -1490,7 +1484,7 @@ dependencies = [
 [[package]]
 name = "ruma"
 version = "0.10.1"
-source = "git+https://github.com/Hywan/ruma?branch=feat-sliding-sync-list-include-heroes#3d56fa8e83d04577bde5d585f6d1c709ca5d724e"
+source = "git+https://github.com/ruma/ruma?rev=75e8829bec0b7bc5332860e1fb2df658d5c71d66#75e8829bec0b7bc5332860e1fb2df658d5c71d66"
 dependencies = [
  "assign",
  "js_int",
@@ -1504,7 +1498,7 @@ dependencies = [
 [[package]]
 name = "ruma-client-api"
 version = "0.18.0"
-source = "git+https://github.com/Hywan/ruma?branch=feat-sliding-sync-list-include-heroes#3d56fa8e83d04577bde5d585f6d1c709ca5d724e"
+source = "git+https://github.com/ruma/ruma?rev=75e8829bec0b7bc5332860e1fb2df658d5c71d66#75e8829bec0b7bc5332860e1fb2df658d5c71d66"
 dependencies = [
  "as_variant",
  "assign",
@@ -1527,7 +1521,7 @@ dependencies = [
 [[package]]
 name = "ruma-common"
 version = "0.13.0"
-source = "git+https://github.com/Hywan/ruma?branch=feat-sliding-sync-list-include-heroes#3d56fa8e83d04577bde5d585f6d1c709ca5d724e"
+source = "git+https://github.com/ruma/ruma?rev=75e8829bec0b7bc5332860e1fb2df658d5c71d66#75e8829bec0b7bc5332860e1fb2df658d5c71d66"
 dependencies = [
  "as_variant",
  "base64",
@@ -1559,7 +1553,7 @@ dependencies = [
 [[package]]
 name = "ruma-events"
 version = "0.28.1"
-source = "git+https://github.com/Hywan/ruma?branch=feat-sliding-sync-list-include-heroes#3d56fa8e83d04577bde5d585f6d1c709ca5d724e"
+source = "git+https://github.com/ruma/ruma?rev=75e8829bec0b7bc5332860e1fb2df658d5c71d66#75e8829bec0b7bc5332860e1fb2df658d5c71d66"
 dependencies = [
  "as_variant",
  "indexmap",
@@ -1581,7 +1575,7 @@ dependencies = [
 [[package]]
 name = "ruma-identifiers-validation"
 version = "0.9.5"
-source = "git+https://github.com/Hywan/ruma?branch=feat-sliding-sync-list-include-heroes#3d56fa8e83d04577bde5d585f6d1c709ca5d724e"
+source = "git+https://github.com/ruma/ruma?rev=75e8829bec0b7bc5332860e1fb2df658d5c71d66#75e8829bec0b7bc5332860e1fb2df658d5c71d66"
 dependencies = [
  "js_int",
  "thiserror",
@@ -1590,7 +1584,7 @@ dependencies = [
 [[package]]
 name = "ruma-macros"
 version = "0.13.0"
-source = "git+https://github.com/Hywan/ruma?branch=feat-sliding-sync-list-include-heroes#3d56fa8e83d04577bde5d585f6d1c709ca5d724e"
+source = "git+https://github.com/ruma/ruma?rev=75e8829bec0b7bc5332860e1fb2df658d5c71d66#75e8829bec0b7bc5332860e1fb2df658d5c71d66"
 dependencies = [
  "once_cell",
  "proc-macro-crate",
@@ -2098,7 +2092,7 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 [[package]]
 name = "vodozemac"
 version = "0.6.0"
-source = "git+https://github.com/matrix-org/vodozemac/?rev=826d0aa22a9b5405535927c7691492db4b92a43b#826d0aa22a9b5405535927c7691492db4b92a43b"
+source = "git+https://github.com/matrix-org/vodozemac/?rev=4ef989c6a8eba0bc809e285a081c56320a9bbf1e#4ef989c6a8eba0bc809e285a081c56320a9bbf1e"
 dependencies = [
  "aes",
  "arrayvec",
@@ -2283,6 +2277,26 @@ dependencies = [
  "const-oid",
  "der",
  "spki",
+]
+
+[[package]]
+name = "zerocopy"
+version = "0.7.34"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ae87e3fcd617500e5d106f0380cf7b77f3c6092aae37191433159dda23cfb087"
+dependencies = [
+ "zerocopy-derive",
+]
+
+[[package]]
+name = "zerocopy-derive"
+version = "0.7.34"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "15e934569e47891f7d9411f1a451d947a60e000ab3bd24fbb970f000387d1b3b"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.66",
 ]
 
 [[package]]
