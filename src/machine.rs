@@ -7,9 +7,12 @@ use std::{
     sync::Arc,
 };
 
-use matrix_sdk_common::ruma::{serde::Raw, DeviceKeyAlgorithm, OwnedTransactionId, UInt};
-use matrix_sdk_common::ruma::events::AnyToDeviceEvent;
-use matrix_sdk_crypto::{backups::MegolmV1BackupKey, types::RoomKeyBackupInfo, EncryptionSyncChanges};
+use matrix_sdk_common::ruma::{
+    events::AnyToDeviceEvent, serde::Raw, DeviceKeyAlgorithm, OwnedTransactionId, UInt,
+};
+use matrix_sdk_crypto::{
+    backups::MegolmV1BackupKey, types::RoomKeyBackupInfo, EncryptionSyncChanges,
+};
 use napi::bindgen_prelude::{within_runtime_if_available, Either7, FromNapiValue, ToNapiValue};
 use napi_derive::*;
 use serde_json::value::RawValue;
@@ -204,7 +207,8 @@ impl OlmMachine {
         one_time_key_counts: HashMap<String, u32>,
         unused_fallback_keys: Vec<String>,
     ) -> napi::Result<String> {
-        let to_device_events: Vec<Raw<AnyToDeviceEvent>> = serde_json::from_str(to_device_events.as_ref()).map_err(into_err)?;
+        let to_device_events: Vec<Raw<AnyToDeviceEvent>> =
+            serde_json::from_str(to_device_events.as_ref()).map_err(into_err)?;
         let changed_devices = changed_devices.inner.clone();
         let one_time_key_counts = one_time_key_counts
             .iter()
@@ -220,17 +224,15 @@ impl OlmMachine {
         serde_json::to_string(
             &self
                 .inner
-                .receive_sync_changes(
-                    EncryptionSyncChanges {
-                        to_device_events,
-                        changed_devices: &changed_devices,
-                        one_time_keys_counts: &one_time_key_counts,
-                        unused_fallback_keys: unused_fallback_keys.as_deref(),
-    
-                        // matrix-sdk-crypto does not (currently) use `next_batch_token`.
-                        next_batch_token: None,
-                    }
-                )
+                .receive_sync_changes(EncryptionSyncChanges {
+                    to_device_events,
+                    changed_devices: &changed_devices,
+                    one_time_keys_counts: &one_time_key_counts,
+                    unused_fallback_keys: unused_fallback_keys.as_deref(),
+
+                    // matrix-sdk-crypto does not (currently) use `next_batch_token`.
+                    next_batch_token: None,
+                })
                 .await
                 .map_err(into_err)?,
         )
@@ -425,10 +427,11 @@ impl OlmMachine {
         let room_id = room_id.inner.clone();
         let content = serde_json::from_str(content.as_str()).map_err(into_err)?;
         let me = self.inner.clone();
-        let data = &me.encrypt_room_event_raw(&room_id, event_type.as_ref(), &content).await.map_err(into_err)?;
-        serde_json::to_string(
-            data
-        ).map_err(into_err)
+        let data = &me
+            .encrypt_room_event_raw(&room_id, event_type.as_ref(), &content)
+            .await
+            .map_err(into_err)?;
+        serde_json::to_string(data).map_err(into_err)
     }
 
     /// Decrypt an event from a room timeline.
