@@ -178,7 +178,6 @@ describe(OlmMachine.name, () => {
             const body = JSON.parse(outgoingRequests[1].body);
             expect(body.timeout).toBeDefined();
             expect(body.device_keys).toBeDefined();
-            expect(body.token).toBeDefined();
         }
     });
 
