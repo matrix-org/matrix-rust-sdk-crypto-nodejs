@@ -8,7 +8,8 @@ use std::{
 };
 
 use matrix_sdk_common::ruma::{serde::Raw, DeviceKeyAlgorithm, OwnedTransactionId, UInt};
-use matrix_sdk_crypto::{backups::MegolmV1BackupKey, types::RoomKeyBackupInfo};
+use matrix_sdk_common::ruma::events::AnyToDeviceEvent;
+use matrix_sdk_crypto::{backups::MegolmV1BackupKey, types::RoomKeyBackupInfo, EncryptionSyncChanges};
 use napi::bindgen_prelude::{within_runtime_if_available, Either7, FromNapiValue, ToNapiValue};
 use napi_derive::*;
 use serde_json::{value::RawValue, Value as JsonValue};
@@ -203,7 +204,7 @@ impl OlmMachine {
         one_time_key_counts: HashMap<String, u32>,
         unused_fallback_keys: Vec<String>,
     ) -> napi::Result<String> {
-        let to_device_events = serde_json::from_str(to_device_events.as_ref()).map_err(into_err)?;
+        let to_device_events: Vec<Raw<AnyToDeviceEvent>> = serde_json::from_str(to_device_events.as_ref()).map_err(into_err)?;
         let changed_devices = changed_devices.inner.clone();
         let one_time_key_counts = one_time_key_counts
             .iter()
@@ -220,10 +221,15 @@ impl OlmMachine {
             &self
                 .inner
                 .receive_sync_changes(
-                    to_device_events,
-                    &changed_devices,
-                    &one_time_key_counts,
-                    unused_fallback_keys.as_deref(),
+                    EncryptionSyncChanges {
+                        to_device_events,
+                        changed_devices: &changed_devices,
+                        one_time_keys_counts: &one_time_key_counts,
+                        unused_fallback_keys: unused_fallback_keys.as_deref(),
+    
+                        // matrix-sdk-crypto does not (currently) use `next_batch_token`.
+                        next_batch_token: None,
+                    }
                 )
                 .await
                 .map_err(into_err)?,
