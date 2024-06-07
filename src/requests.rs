@@ -331,7 +331,7 @@ macro_rules! request {
 }
 
 request!(KeysUploadRequest from RumaKeysUploadRequest groups device_keys, one_time_keys, fallback_keys);
-request!(KeysQueryRequest from RumaKeysQueryRequest groups timeout { timeout.as_ref().map(Duration::as_millis).map(u64::try_from).transpose().map_err(into_err)? }, device_keys, token);
+request!(KeysQueryRequest from RumaKeysQueryRequest groups timeout { timeout.as_ref().map(Duration::as_millis).map(u64::try_from).transpose().map_err(into_err)? }, device_keys);
 request!(KeysClaimRequest from RumaKeysClaimRequest groups timeout { timeout.as_ref().map(Duration::as_millis).map(u64::try_from).transpose().map_err(into_err)? }, one_time_keys);
 request!(ToDeviceRequest from RumaToDeviceRequest extracts event_type: string, txn_id: string and groups messages);
 request!(SignatureUploadRequest from RumaSignatureUploadRequest groups signed_keys);
@@ -379,10 +379,6 @@ impl TryFrom<OutgoingRequest> for OutgoingRequests {
 
             matrix_sdk_crypto::OutgoingRequests::RoomMessage(request) => {
                 Either7::F(RoomMessageRequest::try_from((request_id, request))?)
-            }
-
-            matrix_sdk_crypto::OutgoingRequests::KeysBackup(request) => {
-                Either7::G(KeysBackupRequest::try_from((request_id, request))?)
             }
         })
     }
