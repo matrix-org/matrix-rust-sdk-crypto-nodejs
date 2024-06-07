@@ -614,6 +614,7 @@ impl OlmMachine {
         serde_json::to_string(
             &self
                 .inner
+                .store()
                 .export_room_keys(|session| {
                     session.session_id() == session_id && session.room_id() == &room_id
                 })
