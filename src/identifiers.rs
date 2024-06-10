@@ -1,7 +1,7 @@
 //! Types for [Matrix](https://matrix.org/) identifiers for devices,
 //! events, keys, rooms, servers, users and URIs.
 
-use matrix_sdk_common::ruma;
+use matrix_sdk_common::ruma::{self};
 use napi::bindgen_prelude::{FromNapiValue, ToNapiValue};
 use napi_derive::*;
 
@@ -215,7 +215,14 @@ impl RoomId {
     /// Parse/validate and create a new `RoomId`.
     #[napi(constructor, strict)]
     pub fn new(id: String) -> napi::Result<Self> {
-        Ok(Self::from(ruma::RoomId::parse(id).map_err(into_err)?))
+        let room_id = ruma::RoomId::parse(id).map_err(into_err)?;
+        match room_id.server_name() {
+            Some(_) => Ok(Self::from(room_id)),
+            None => Err(napi::Error::from_reason(
+                "Room ID does not have a valid server_name"
+                    .to_owned(),
+            ))
+        }
     }
 
     /// Return the room ID as a string.
@@ -223,6 +230,13 @@ impl RoomId {
     #[allow(clippy::inherent_to_string)]
     pub fn to_string(&self) -> String {
         self.inner.as_str().to_owned()
+    }
+
+
+    /// Returns the server name of the room ID.
+    #[napi(getter)]
+    pub fn server_name(&self) -> ServerName {
+        ServerName { inner: self.inner.server_name().unwrap().to_owned() }
     }
 }
 
