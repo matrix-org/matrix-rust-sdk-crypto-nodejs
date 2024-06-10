@@ -1,7 +1,7 @@
 //! Types for [Matrix](https://matrix.org/) identifiers for devices,
 //! events, keys, rooms, servers, users and URIs.
 
-use matrix_sdk_common::ruma::{self};
+use matrix_sdk_common::ruma;
 use napi::bindgen_prelude::{FromNapiValue, ToNapiValue};
 use napi_derive::*;
 

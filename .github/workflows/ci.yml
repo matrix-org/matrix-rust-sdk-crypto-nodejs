@@ -48,7 +48,6 @@ jobs:
   test:
     name: test ${{ matrix.os-name }}, v${{ matrix.node-version }}
     runs-on: ${{ matrix.os }}
-    needs: [lint]
 
     strategy:
       fail-fast: true
