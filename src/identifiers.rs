@@ -219,9 +219,8 @@ impl RoomId {
         match room_id.server_name() {
             Some(_) => Ok(Self::from(room_id)),
             None => Err(napi::Error::from_reason(
-                "Room ID does not have a valid server_name"
-                    .to_owned(),
-            ))
+                "Room ID does not have a valid server_name".to_owned(),
+            )),
         }
     }
 
@@ -231,7 +230,6 @@ impl RoomId {
     pub fn to_string(&self) -> String {
         self.inner.as_str().to_owned()
     }
-
 
     /// Returns the server name of the room ID.
     #[napi(getter)]
