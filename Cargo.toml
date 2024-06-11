@@ -24,20 +24,22 @@ qrcode = ["matrix-sdk-crypto/qrcode"]
 tracing = ["dep:tracing-subscriber"]
 
 [dependencies]
-matrix-sdk-common = { git = "https://github.com/matrix-org/matrix-rust-sdk", rev = "fc3883d08e3ce9d04be39b1fc2867c21b973dbd7", features = ["js"] }
-matrix-sdk-sqlite = { git = "https://github.com/matrix-org/matrix-rust-sdk", rev = "fc3883d08e3ce9d04be39b1fc2867c21b973dbd7", features = ["crypto-store"] }
+matrix-sdk-common = { git = "https://github.com/matrix-org/matrix-rust-sdk", rev = "931c5649420adb071caf1abafc7964758487e472", features = ["js"] }
+matrix-sdk-sqlite = { git = "https://github.com/matrix-org/matrix-rust-sdk", rev = "931c5649420adb071caf1abafc7964758487e472", features = ["crypto-store"] }
 napi = { version = "2.9.1", default-features = false, features = ["napi6", "tokio_rt"] }
 napi-derive = "2.9.1"
+# Fix error[E0635]: unknown feature `stdsimd` caused by ahash < 0.8.7
+ahash = "0.8.7"
 serde_json = "1.0.91"
-http = "0.2.6"
-tracing-subscriber = { version = "0.3", default-features = false, features = ["tracing-log", "time", "smallvec", "fmt", "env-filter"], optional = true }
+http = "1.1.0"
+tracing-subscriber = { version = "^0.3.0", default-features = false, features = ["tracing-log", "time", "smallvec", "fmt", "env-filter"], optional = true }
 zeroize = "1.3.0"
 
 [dependencies.matrix-sdk-crypto]
 git = "https://github.com/matrix-org/matrix-rust-sdk"
-rev = "fc3883d08e3ce9d04be39b1fc2867c21b973dbd7"
-default_features = false
-features = ["js", "backups_v1", "automatic-room-key-forwarding"]
+rev = "931c5649420adb071caf1abafc7964758487e472"
+default-features = false
+features = ["js", "automatic-room-key-forwarding"]
 
 [build-dependencies]
 napi-build = "2.0.0"

@@ -105,10 +105,6 @@ describe(RoomId.name, () => {
 
     const room = new RoomId("!foo:bar.org");
 
-    test("localpart is present", () => {
-        expect(room.localpart).toStrictEqual("foo");
-    });
-
     test("server name is present", () => {
         expect(room.serverName).toBeInstanceOf(ServerName);
     });

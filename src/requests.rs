@@ -14,7 +14,7 @@ use matrix_sdk_crypto::requests::{
     KeysBackupRequest as RumaKeysBackupRequest, KeysQueryRequest as RumaKeysQueryRequest,
     RoomMessageRequest as RumaRoomMessageRequest, ToDeviceRequest as RumaToDeviceRequest,
 };
-use napi::bindgen_prelude::{Either7, FromNapiValue, ToNapiValue};
+use napi::bindgen_prelude::{Either6, FromNapiValue, ToNapiValue};
 use napi_derive::*;
 
 use crate::into_err;
@@ -63,7 +63,7 @@ pub struct KeysQueryRequest {
     /// A JSON-encoded object of form:
     ///
     /// ```json
-    /// {"timeout": …, "one_time_keys": …}
+    /// {"timeout": …, "device_keys": …}
     /// ```
     #[napi(readonly)]
     pub body: String,
@@ -94,7 +94,7 @@ pub struct KeysClaimRequest {
     /// A JSON-encoded object of form:
     ///
     /// ```json
-    /// {"event_type": …, "txn_id": …, "messages": …}
+    /// {"timeout": …,  "one_time_keys": …}
     /// ```
     #[napi(readonly)]
     pub body: String,
@@ -331,21 +331,20 @@ macro_rules! request {
 }
 
 request!(KeysUploadRequest from RumaKeysUploadRequest groups device_keys, one_time_keys, fallback_keys);
-request!(KeysQueryRequest from RumaKeysQueryRequest groups timeout { timeout.as_ref().map(Duration::as_millis).map(u64::try_from).transpose().map_err(into_err)? }, device_keys, token);
+request!(KeysQueryRequest from RumaKeysQueryRequest groups timeout { timeout.as_ref().map(Duration::as_millis).map(u64::try_from).transpose().map_err(into_err)? }, device_keys);
 request!(KeysClaimRequest from RumaKeysClaimRequest groups timeout { timeout.as_ref().map(Duration::as_millis).map(u64::try_from).transpose().map_err(into_err)? }, one_time_keys);
 request!(ToDeviceRequest from RumaToDeviceRequest extracts event_type: string, txn_id: string and groups messages);
 request!(SignatureUploadRequest from RumaSignatureUploadRequest groups signed_keys);
 request!(RoomMessageRequest from RumaRoomMessageRequest extracts room_id: string, txn_id: string, event_type: event_type, content: json);
 request!(KeysBackupRequest from RumaKeysBackupRequest groups rooms);
 
-pub type OutgoingRequests = Either7<
+pub type OutgoingRequests = Either6<
     KeysUploadRequest,
     KeysQueryRequest,
     KeysClaimRequest,
     ToDeviceRequest,
     SignatureUploadRequest,
     RoomMessageRequest,
-    KeysBackupRequest,
 >;
 
 pub(crate) struct OutgoingRequest(pub(crate) matrix_sdk_crypto::OutgoingRequest);
@@ -358,31 +357,27 @@ impl TryFrom<OutgoingRequest> for OutgoingRequests {
 
         Ok(match outgoing_request.0.request() {
             matrix_sdk_crypto::OutgoingRequests::KeysUpload(request) => {
-                Either7::A(KeysUploadRequest::try_from((request_id, request))?)
+                Either6::A(KeysUploadRequest::try_from((request_id, request))?)
             }
 
             matrix_sdk_crypto::OutgoingRequests::KeysQuery(request) => {
-                Either7::B(KeysQueryRequest::try_from((request_id, request))?)
+                Either6::B(KeysQueryRequest::try_from((request_id, request))?)
             }
 
             matrix_sdk_crypto::OutgoingRequests::KeysClaim(request) => {
-                Either7::C(KeysClaimRequest::try_from((request_id, request))?)
+                Either6::C(KeysClaimRequest::try_from((request_id, request))?)
             }
 
             matrix_sdk_crypto::OutgoingRequests::ToDeviceRequest(request) => {
-                Either7::D(ToDeviceRequest::try_from((request_id, request))?)
+                Either6::D(ToDeviceRequest::try_from((request_id, request))?)
             }
 
             matrix_sdk_crypto::OutgoingRequests::SignatureUpload(request) => {
-                Either7::E(SignatureUploadRequest::try_from((request_id, request))?)
+                Either6::E(SignatureUploadRequest::try_from((request_id, request))?)
             }
 
             matrix_sdk_crypto::OutgoingRequests::RoomMessage(request) => {
-                Either7::F(RoomMessageRequest::try_from((request_id, request))?)
-            }
-
-            matrix_sdk_crypto::OutgoingRequests::KeysBackup(request) => {
-                Either7::G(KeysBackupRequest::try_from((request_id, request))?)
+                Either6::F(RoomMessageRequest::try_from((request_id, request))?)
             }
         })
     }
