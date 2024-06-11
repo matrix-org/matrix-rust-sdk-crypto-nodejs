@@ -7,13 +7,11 @@ use std::{
     sync::Arc,
 };
 
-use matrix_sdk_common::ruma::{
-    events::AnyToDeviceEvent, serde::Raw, DeviceKeyAlgorithm, OwnedTransactionId, UInt,
-};
+use matrix_sdk_common::ruma::{serde::Raw, DeviceKeyAlgorithm, OwnedTransactionId, UInt};
 use matrix_sdk_crypto::{
     backups::MegolmV1BackupKey, types::RoomKeyBackupInfo, EncryptionSyncChanges,
 };
-use napi::bindgen_prelude::{within_runtime_if_available, Either7, FromNapiValue, ToNapiValue};
+use napi::bindgen_prelude::{within_runtime_if_available, Either6, FromNapiValue, ToNapiValue};
 use napi_derive::*;
 use serde_json::value::RawValue;
 use zeroize::Zeroize;
@@ -207,7 +205,7 @@ impl OlmMachine {
         one_time_key_counts: HashMap<String, u32>,
         unused_fallback_keys: Vec<String>,
     ) -> napi::Result<String> {
-        let to_device_events: Vec<Raw<AnyToDeviceEvent>> =
+        let to_device_events_decoded =
             serde_json::from_str(to_device_events.as_ref()).map_err(into_err)?;
         let changed_devices = changed_devices.inner.clone();
         let one_time_key_counts = one_time_key_counts
@@ -225,7 +223,7 @@ impl OlmMachine {
             &self
                 .inner
                 .receive_sync_changes(EncryptionSyncChanges {
-                    to_device_events,
+                    to_device_events: to_device_events_decoded,
                     changed_devices: &changed_devices,
                     one_time_keys_counts: &one_time_key_counts,
                     unused_fallback_keys: unused_fallback_keys.as_deref(),
@@ -253,17 +251,16 @@ impl OlmMachine {
     ) -> napi::Result<
         Vec<
             // We could be tempted to use `requests::OutgoingRequests` as its
-            // a type alias for this giant `Either7`. But `napi` won't unfold
+            // a type alias for this giant `Either6`. But `napi` won't unfold
             // it properly into a valid TypeScript definition, so…  let's
             // copy-paste :-(.
-            Either7<
+            Either6<
                 requests::KeysUploadRequest,
                 requests::KeysQueryRequest,
                 requests::KeysClaimRequest,
                 requests::ToDeviceRequest,
                 requests::SignatureUploadRequest,
                 requests::RoomMessageRequest,
-                requests::KeysBackupRequest,
             >,
         >,
     > {
@@ -426,12 +423,14 @@ impl OlmMachine {
     ) -> napi::Result<String> {
         let room_id = room_id.inner.clone();
         let content = serde_json::from_str(content.as_str()).map_err(into_err)?;
-        let me = self.inner.clone();
-        let data = &me
-            .encrypt_room_event_raw(&room_id, event_type.as_ref(), &content)
-            .await
-            .map_err(into_err)?;
-        serde_json::to_string(data).map_err(into_err)
+        serde_json::to_string(
+            &self
+                .inner
+                .encrypt_room_event_raw(&room_id, event_type.as_ref(), &content)
+                .await
+                .map_err(into_err)?,
+        )
+        .map_err(into_err)
     }
 
     /// Decrypt an event from a room timeline.
@@ -491,8 +490,7 @@ impl OlmMachine {
     /// cross-signing master key.
     #[napi(strict)]
     pub async fn sign(&self, message: String) -> napi::Result<types::Signatures> {
-        let signed = self.inner.sign(message.as_str()).await.map_err(into_err)?;
-        Ok(signed.into())
+        Ok(self.inner.sign(&message).await.map_err(into_err)?.into())
     }
 
     /// Store the backup decryption key in the crypto store.
