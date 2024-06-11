@@ -242,7 +242,7 @@ impl OlmMachine {
     /// This returns a list of `KeysUploadRequest`, or
     /// `KeysQueryRequest`, or `KeysClaimRequest`, or
     /// `ToDeviceRequest`, or `SignatureUploadRequest`, or
-    /// `RoomMessageRequest`, or `KeysBackupRequest`. Those requests
+    /// `RoomMessageRequest`. Those requests
     /// need to be sent out to the server and the responses need to be
     /// passed back to the state machine using `mark_request_as_sent`.
     #[napi]
