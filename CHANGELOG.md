@@ -1,5 +1,11 @@
 # Matrix-Rust-SDK Node.js Bindings
 
+## 0.2.0-beta.1 - 2024-06-11
+
+-   Support Node.JS 22, drop support for 16, 19.
+-   Update matrix-rust-sdk dependency.
+-   `RoomId` no longer has a `localpart` property.
+
 ## 0.1.0-beta.12 - 2024-02-01
 
 -   Add prebuilt library support for 390x. [#32](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/32)
