@@ -13,7 +13,6 @@
     },
     "license": "Apache-2.0",
     "devDependencies": {
-        "@napi-rs/cli": "^2.18.0",
         "jest": "^28.1.0",
         "prettier": "^2.8.3",
         "typedoc": "^0.22.17",
@@ -24,13 +23,14 @@
     },
     "scripts": {
         "lint": "prettier --check .",
-        "release-build": "napi build --platform --release --strip",
+        "release-build": "napi build --platform --release --strip --cargo-flags=--locked",
         "build": "napi build --platform",
-        "postinstall": "node download-lib.js",
+        "postinstall": "node postinstall.js",
         "test": "jest --verbose --testTimeout 10000",
         "doc": "typedoc --tsconfig ."
     },
     "dependencies": {
+        "@napi-rs/cli": "^2.18.0",
         "https-proxy-agent": "^5.0.1",
         "node-downloader-helper": "^2.1.5"
     },
