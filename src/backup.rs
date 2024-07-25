@@ -1,11 +1,9 @@
 //! Megolm backup types
 
-use matrix_sdk_crypto::backups::MegolmV1BackupKey as InnerMegolmV1BackupKey;
-use matrix_sdk_crypto::olm::InboundGroupSession;
-use matrix_sdk_crypto::store;
+use matrix_sdk_crypto::{
+    backups::MegolmV1BackupKey as InnerMegolmV1BackupKey, olm::InboundGroupSession, store,
+};
 use napi_derive::*;
-
-
 
 use crate::into_err;
 
@@ -32,7 +30,8 @@ pub struct KeyBackupData {
     /// Unpadded base64-encoded public half of the ephemeral key.
     pub session_data_ephemeral: String,
 
-    /// Ciphertext, encrypted using AES-CBC-256 with PKCS#7 padding, encoded in base64.
+    /// Ciphertext, encrypted using AES-CBC-256 with PKCS#7 padding, encoded in
+    /// base64.
     pub session_data_ciphertext: String,
 
     /// First 8 bytes of MAC key, encoded in base64.
