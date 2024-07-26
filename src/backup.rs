@@ -21,21 +21,28 @@ pub struct MegolmV1BackupKey {
     inner: InnerMegolmV1BackupKey,
 }
 
+
+#[napi(object)]
+#[derive(Debug, Clone)]
+pub struct SessionData {
+    /// Unpadded base64-encoded public half of the ephemeral key.
+    pub ephemeral: String,
+
+    /// Ciphertext, encrypted using AES-CBC-256 with PKCS#7 padding, encoded in
+    /// base64.
+    pub ciphertext: String,
+
+    /// First 8 bytes of MAC key, encoded in base64.
+    pub mac: String,
+}
+
 #[napi]
 #[derive(Debug, Clone)]
 pub struct KeyBackupData {
     pub first_message_index: i64,
     pub forwarded_count: i64,
     pub is_verified: bool,
-    /// Unpadded base64-encoded public half of the ephemeral key.
-    pub session_data_ephemeral: String,
-
-    /// Ciphertext, encrypted using AES-CBC-256 with PKCS#7 padding, encoded in
-    /// base64.
-    pub session_data_ciphertext: String,
-
-    /// First 8 bytes of MAC key, encoded in base64.
-    pub session_data_mac: String,
+    pub session_data: SessionData,
 }
 
 #[napi]
@@ -58,8 +65,10 @@ impl MegolmV1BackupKey {
         Ok(Self { inner: InnerMegolmV1BackupKey::from_base64(&key).map_err(into_err)? })
     }
 
+    /// Encrypt an exported room session which can then be uploaded to the homeserver's key backup.
+    /// Consumes a single session exported from `OlmMachine.export_room_keys_for_session`
     #[napi(strict)]
-    pub async fn encrypt(&self, exported_session_json: String) -> napi::Result<KeyBackupData> {
+    pub async fn encrypt_exported_session(&self, exported_session_json: String) -> napi::Result<KeyBackupData> {
         let exported_session = serde_json::from_str(&exported_session_json).map_err(into_err)?;
         let session = InboundGroupSession::from_export(&exported_session).map_err(into_err)?;
         let res = self.inner.encrypt(session).await;
@@ -67,9 +76,11 @@ impl MegolmV1BackupKey {
             first_message_index: res.first_message_index.into(),
             forwarded_count: res.forwarded_count.into(),
             is_verified: res.is_verified,
-            session_data_ephemeral: res.session_data.ephemeral.to_string(),
-            session_data_ciphertext: res.session_data.ciphertext.to_string(),
-            session_data_mac: res.session_data.mac.to_string(),
+            session_data: SessionData {
+                ephemeral: res.session_data.ephemeral.to_string(),
+                ciphertext: res.session_data.ciphertext.to_string(),
+                mac: res.session_data.mac.to_string(),
+            }
         })
     }
 }
