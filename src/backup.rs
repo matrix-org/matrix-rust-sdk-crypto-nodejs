@@ -21,7 +21,6 @@ pub struct MegolmV1BackupKey {
     inner: InnerMegolmV1BackupKey,
 }
 
-
 #[napi(object)]
 #[derive(Debug, Clone)]
 pub struct SessionData {
@@ -65,10 +64,14 @@ impl MegolmV1BackupKey {
         Ok(Self { inner: InnerMegolmV1BackupKey::from_base64(&key).map_err(into_err)? })
     }
 
-    /// Encrypt an exported room session which can then be uploaded to the homeserver's key backup.
-    /// Consumes a single session exported from `OlmMachine.export_room_keys_for_session`
+    /// Encrypt an exported room session which can then be uploaded to the
+    /// homeserver's key backup. Consumes a single session exported from
+    /// `OlmMachine.export_room_keys_for_session`
     #[napi(strict)]
-    pub async fn encrypt_exported_session(&self, exported_session_json: String) -> napi::Result<KeyBackupData> {
+    pub async fn encrypt_exported_session(
+        &self,
+        exported_session_json: String,
+    ) -> napi::Result<KeyBackupData> {
         let exported_session = serde_json::from_str(&exported_session_json).map_err(into_err)?;
         let session = InboundGroupSession::from_export(&exported_session).map_err(into_err)?;
         let res = self.inner.encrypt(session).await;
@@ -80,7 +83,7 @@ impl MegolmV1BackupKey {
                 ephemeral: res.session_data.ephemeral.to_string(),
                 ciphertext: res.session_data.ciphertext.to_string(),
                 mac: res.session_data.mac.to_string(),
-            }
+            },
         })
     }
 }
