@@ -1,6 +1,8 @@
 use std::time::Duration;
 
-use matrix_sdk_common::{deserialized_responses::ShieldState as RustShieldState, deserialized_responses::ShieldStateCode as RustShieldStateCode};
+use matrix_sdk_common::deserialized_responses::{
+    ShieldState as RustShieldState, ShieldStateCode as RustShieldStateCode,
+};
 use matrix_sdk_crypto::CollectStrategy;
 use napi::bindgen_prelude::BigInt;
 use napi_derive::*;
@@ -99,7 +101,10 @@ impl From<&EncryptionSettings> for matrix_sdk_crypto::olm::EncryptionSettings {
             rotation_period: Duration::from_micros(value.rotation_period.get_u64().1),
             rotation_period_msgs: value.rotation_period_messages.get_u64().1,
             history_visibility: value.history_visibility.into(),
-            sharing_strategy: CollectStrategy::DeviceBasedStrategy { only_allow_trusted_devices: value.only_allow_trusted_devices, error_on_verified_user_problem: value.error_on_verified_user_problem },
+            sharing_strategy: CollectStrategy::DeviceBasedStrategy {
+                only_allow_trusted_devices: value.only_allow_trusted_devices,
+                error_on_verified_user_problem: value.error_on_verified_user_problem,
+            },
         }
     }
 }
@@ -113,7 +118,8 @@ pub enum ShieldColor {
     None,
 }
 
-/// Take a look at [`matrix_sdk_common::deserialized_responses::ShieldStateCode`]
+/// Take a look at
+/// [`matrix_sdk_common::deserialized_responses::ShieldStateCode`]
 /// for more info.
 #[napi]
 pub enum ShieldStateCode {
@@ -135,7 +141,9 @@ pub enum ShieldStateCode {
 impl From<RustShieldStateCode> for ShieldStateCode {
     fn from(value: RustShieldStateCode) -> Self {
         match value {
-            RustShieldStateCode::AuthenticityNotGuaranteed => ShieldStateCode::AuthenticityNotGuaranteed,
+            RustShieldStateCode::AuthenticityNotGuaranteed => {
+                ShieldStateCode::AuthenticityNotGuaranteed
+            }
             RustShieldStateCode::UnknownDevice => ShieldStateCode::UnknownDevice,
             RustShieldStateCode::UnsignedDevice => ShieldStateCode::UnsignedDevice,
             RustShieldStateCode::UnverifiedIdentity => ShieldStateCode::UnverifiedIdentity,
@@ -163,7 +171,9 @@ impl From<RustShieldState> for ShieldState {
             RustShieldState::Grey { message, code } => {
                 ShieldState { color: ShieldColor::Grey, message: Some(message), code: code.into() }
             }
-            RustShieldState::None => ShieldState { color: ShieldColor::None, message: None, code: ShieldStateCode::None },
+            RustShieldState::None => {
+                ShieldState { color: ShieldColor::None, message: None, code: ShieldStateCode::None }
+            }
         }
     }
 }

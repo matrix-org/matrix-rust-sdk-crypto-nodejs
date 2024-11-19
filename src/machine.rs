@@ -9,7 +9,8 @@ use std::{
 
 use matrix_sdk_common::ruma::{serde::Raw, OneTimeKeyAlgorithm, OwnedTransactionId, UInt};
 use matrix_sdk_crypto::{
-    backups::MegolmV1BackupKey, types::RoomKeyBackupInfo, DecryptionSettings, EncryptionSyncChanges, TrustRequirement
+    backups::MegolmV1BackupKey, types::RoomKeyBackupInfo, DecryptionSettings,
+    EncryptionSyncChanges, TrustRequirement,
 };
 use napi::bindgen_prelude::{within_runtime_if_available, Either6};
 use napi_derive::*;
@@ -448,11 +449,14 @@ impl OlmMachine {
         let event = Raw::from_json(RawValue::from_string(event).map_err(into_err)?);
         let room_id = room_id.inner.clone();
 
-        let decryption_settings = DecryptionSettings {
-            sender_device_trust_requirement: TrustRequirement::Untrusted,
-        };
+        let decryption_settings =
+            DecryptionSettings { sender_device_trust_requirement: TrustRequirement::Untrusted };
 
-        let room_event = self.inner.decrypt_room_event(&event, &room_id, &decryption_settings).await.map_err(into_err)?;
+        let room_event = self
+            .inner
+            .decrypt_room_event(&event, &room_id, &decryption_settings)
+            .await
+            .map_err(into_err)?;
 
         Ok(room_event.into())
     }
