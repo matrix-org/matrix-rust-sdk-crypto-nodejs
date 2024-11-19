@@ -14,7 +14,7 @@ use matrix_sdk_crypto::requests::{
     KeysBackupRequest as RumaKeysBackupRequest, KeysQueryRequest as RumaKeysQueryRequest,
     RoomMessageRequest as RumaRoomMessageRequest, ToDeviceRequest as RumaToDeviceRequest,
 };
-use napi::bindgen_prelude::{Either6, FromNapiValue, ToNapiValue};
+use napi::bindgen_prelude::Either6;
 use napi_derive::*;
 
 use crate::into_err;

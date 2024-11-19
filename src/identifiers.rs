@@ -2,7 +2,6 @@
 //! events, keys, rooms, servers, users and URIs.
 
 use matrix_sdk_common::ruma;
-use napi::bindgen_prelude::{FromNapiValue, ToNapiValue};
 use napi_derive::*;
 
 use crate::into_err;
@@ -124,7 +123,7 @@ impl DeviceKeyId {
     /// Returns device ID of the device key ID.
     #[napi(getter)]
     pub fn device_id(&self) -> DeviceId {
-        self.inner.device_id().to_owned().into()
+        return DeviceId::new(self.inner.to_string());
     }
 
     /// Return the device key ID as a string.
@@ -189,7 +188,6 @@ impl From<ruma::DeviceKeyAlgorithm> for DeviceKeyAlgorithmName {
         match value {
             Ed25519 => Self::Ed25519,
             Curve25519 => Self::Curve25519,
-            SignedCurve25519 => Self::SignedCurve25519,
             _ => Self::Unknown,
         }
     }
