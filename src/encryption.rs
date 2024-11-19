@@ -1,7 +1,8 @@
 use std::time::Duration;
 
-use matrix_sdk_common::deserialized_responses::ShieldState as RustShieldState;
-use napi::bindgen_prelude::{BigInt, FromNapiValue, ToNapiValue};
+use matrix_sdk_common::{deserialized_responses::ShieldState as RustShieldState, deserialized_responses::ShieldStateCode as RustShieldStateCode};
+use matrix_sdk_crypto::CollectStrategy;
+use napi::bindgen_prelude::BigInt;
 use napi_derive::*;
 
 use crate::events;
@@ -63,6 +64,9 @@ pub struct EncryptionSettings {
     /// Should untrusted devices receive the room key, or should they be
     /// excluded from the conversation.
     pub only_allow_trusted_devices: bool,
+
+    /// Should we bleh?
+    pub error_on_verified_user_problem: bool,
 }
 
 impl Default for EncryptionSettings {
@@ -82,17 +86,9 @@ impl Default for EncryptionSettings {
                 n.into()
             },
             history_visibility: default.history_visibility.into(),
-            only_allow_trusted_devices: default.only_allow_trusted_devices,
+            only_allow_trusted_devices: false,
+            error_on_verified_user_problem: false,
         }
-    }
-}
-
-#[napi]
-impl EncryptionSettings {
-    /// Create a new `EncryptionSettings` with default values.
-    #[napi(constructor)]
-    pub fn new() -> EncryptionSettings {
-        Self::default()
     }
 }
 
@@ -103,7 +99,7 @@ impl From<&EncryptionSettings> for matrix_sdk_crypto::olm::EncryptionSettings {
             rotation_period: Duration::from_micros(value.rotation_period.get_u64().1),
             rotation_period_msgs: value.rotation_period_messages.get_u64().1,
             history_visibility: value.history_visibility.into(),
-            only_allow_trusted_devices: value.only_allow_trusted_devices,
+            sharing_strategy: CollectStrategy::DeviceBasedStrategy { only_allow_trusted_devices: value.only_allow_trusted_devices, error_on_verified_user_problem: value.error_on_verified_user_problem },
         }
     }
 }
@@ -117,24 +113,57 @@ pub enum ShieldColor {
     None,
 }
 
+/// Take a look at [`matrix_sdk_common::deserialized_responses::ShieldStateCode`]
+/// for more info.
+#[napi]
+pub enum ShieldStateCode {
+    /// Not enough information available to check the authenticity.
+    AuthenticityNotGuaranteed,
+    /// The sending device isn't yet known by the Client.
+    UnknownDevice,
+    /// The sending device hasn't been verified by the sender.
+    UnsignedDevice,
+    /// The sender hasn't been verified by the Client's user.
+    UnverifiedIdentity,
+    /// An unencrypted event in an encrypted room.
+    SentInClear,
+    /// The sender was previously verified but changed their identity.
+    VerificationViolation,
+    None,
+}
+
+impl From<RustShieldStateCode> for ShieldStateCode {
+    fn from(value: RustShieldStateCode) -> Self {
+        match value {
+            RustShieldStateCode::AuthenticityNotGuaranteed => ShieldStateCode::AuthenticityNotGuaranteed,
+            RustShieldStateCode::UnknownDevice => ShieldStateCode::UnknownDevice,
+            RustShieldStateCode::UnsignedDevice => ShieldStateCode::UnsignedDevice,
+            RustShieldStateCode::UnverifiedIdentity => ShieldStateCode::UnverifiedIdentity,
+            RustShieldStateCode::SentInClear => ShieldStateCode::SentInClear,
+            RustShieldStateCode::VerificationViolation => ShieldStateCode::VerificationViolation,
+        }
+    }
+}
+
 /// Take a look at [`matrix_sdk_common::deserialized_responses::ShieldState`]
 /// for more info.
 #[napi]
 pub struct ShieldState {
     pub color: ShieldColor,
+    pub code: ShieldStateCode,
     pub message: Option<&'static str>,
 }
 
 impl From<RustShieldState> for ShieldState {
     fn from(value: RustShieldState) -> Self {
         match value {
-            RustShieldState::Red { message } => {
-                ShieldState { color: ShieldColor::Red, message: Some(message) }
+            RustShieldState::Red { message, code } => {
+                ShieldState { color: ShieldColor::Red, message: Some(message), code: code.into() }
             }
-            RustShieldState::Grey { message } => {
-                ShieldState { color: ShieldColor::Grey, message: Some(message) }
+            RustShieldState::Grey { message, code } => {
+                ShieldState { color: ShieldColor::Grey, message: Some(message), code: code.into() }
             }
-            RustShieldState::None => ShieldState { color: ShieldColor::None, message: None },
+            RustShieldState::None => ShieldState { color: ShieldColor::None, message: None, code: ShieldStateCode::None },
         }
     }
 }
