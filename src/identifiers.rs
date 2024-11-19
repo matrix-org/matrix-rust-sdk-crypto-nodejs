@@ -123,7 +123,7 @@ impl DeviceKeyId {
     /// Returns device ID of the device key ID.
     #[napi(getter)]
     pub fn device_id(&self) -> DeviceId {
-        return DeviceId::new(self.inner.to_string());
+        return DeviceId::new(self.inner.key_name().to_string());
     }
 
     /// Return the device key ID as a string.
@@ -172,10 +172,6 @@ pub enum DeviceKeyAlgorithmName {
 
     /// The Curve25519 ECDH algorithm.
     Curve25519,
-
-    /// The Curve25519 ECDH algorithm, but the key also contains
-    /// signatures.
-    SignedCurve25519,
 
     /// An unknown device key algorithm.
     Unknown,

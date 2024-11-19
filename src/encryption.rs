@@ -67,7 +67,9 @@ pub struct EncryptionSettings {
     /// excluded from the conversation.
     pub only_allow_trusted_devices: bool,
 
-    /// Should we bleh?
+    /// Should keys be shared with a verified user with an unverified device
+    /// or when a verified user has replaced their identity. Otherwise
+    /// keys are shared with unsigned devices as normal.
     pub error_on_verified_user_problem: bool,
 }
 
@@ -91,6 +93,15 @@ impl Default for EncryptionSettings {
             only_allow_trusted_devices: false,
             error_on_verified_user_problem: false,
         }
+    }
+}
+
+#[napi]
+impl EncryptionSettings {
+    /// Create a new `EncryptionSettings` with default values.
+    #[napi(constructor)]
+    pub fn new() -> EncryptionSettings {
+        Self::default()
     }
 }
 
