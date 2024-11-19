@@ -7,11 +7,12 @@ use std::{
     sync::Arc,
 };
 
-use matrix_sdk_common::ruma::{serde::Raw, DeviceKeyAlgorithm, OwnedTransactionId, UInt};
+use matrix_sdk_common::ruma::{serde::Raw, OneTimeKeyAlgorithm, OwnedTransactionId, UInt};
 use matrix_sdk_crypto::{
-    backups::MegolmV1BackupKey, types::RoomKeyBackupInfo, EncryptionSyncChanges,
+    backups::MegolmV1BackupKey, types::RoomKeyBackupInfo, DecryptionSettings,
+    EncryptionSyncChanges, TrustRequirement,
 };
-use napi::bindgen_prelude::{within_runtime_if_available, Either6, FromNapiValue, ToNapiValue};
+use napi::bindgen_prelude::{within_runtime_if_available, Either6};
 use napi_derive::*;
 use serde_json::value::RawValue;
 use zeroize::Zeroize;
@@ -210,12 +211,12 @@ impl OlmMachine {
         let changed_devices = changed_devices.inner.clone();
         let one_time_key_counts = one_time_key_counts
             .iter()
-            .map(|(key, value)| (DeviceKeyAlgorithm::from(key.as_str()), UInt::from(*value)))
+            .map(|(key, value)| (OneTimeKeyAlgorithm::from(key.as_str()), UInt::from(*value)))
             .collect::<BTreeMap<_, _>>();
         let unused_fallback_keys = Some(
             unused_fallback_keys
                 .into_iter()
-                .map(|key| DeviceKeyAlgorithm::from(key.as_str()))
+                .map(|key| OneTimeKeyAlgorithm::from(key.as_str()))
                 .collect::<Vec<_>>(),
         );
 
@@ -448,7 +449,14 @@ impl OlmMachine {
         let event = Raw::from_json(RawValue::from_string(event).map_err(into_err)?);
         let room_id = room_id.inner.clone();
 
-        let room_event = self.inner.decrypt_room_event(&event, &room_id).await.map_err(into_err)?;
+        let decryption_settings =
+            DecryptionSettings { sender_device_trust_requirement: TrustRequirement::Untrusted };
+
+        let room_event = self
+            .inner
+            .decrypt_room_event(&event, &room_id, &decryption_settings)
+            .await
+            .map_err(into_err)?;
 
         Ok(room_event.into())
     }

@@ -1,7 +1,6 @@
 //! Types related to events.
 
 use matrix_sdk_common::ruma::events::room::history_visibility::HistoryVisibility as RumaHistoryVisibility;
-use napi::bindgen_prelude::{FromNapiValue, ToNapiValue};
 use napi_derive::*;
 
 /// Who can see a room's history.

@@ -59,15 +59,6 @@ describe(DeviceKeyId.name, () => {
             algorithm: "curve25519",
             deviceId: "foobar",
         },
-
-        {
-            name: "signed curve25519",
-            id: "signed_curve25519:foobar",
-            algorithmName: DeviceKeyAlgorithmName.SignedCurve25519,
-            algorithm: "signed_curve25519",
-            deviceId: "foobar",
-        },
-
         {
             name: "unknown",
             id: "hello:foobar",
@@ -91,8 +82,7 @@ describe("DeviceKeyAlgorithmName", () => {
     test("has the correct variants", () => {
         expect(DeviceKeyAlgorithmName.Ed25519).toStrictEqual(0);
         expect(DeviceKeyAlgorithmName.Curve25519).toStrictEqual(1);
-        expect(DeviceKeyAlgorithmName.SignedCurve25519).toStrictEqual(2);
-        expect(DeviceKeyAlgorithmName.Unknown).toStrictEqual(3);
+        expect(DeviceKeyAlgorithmName.Unknown).toStrictEqual(2);
     });
 });
 
