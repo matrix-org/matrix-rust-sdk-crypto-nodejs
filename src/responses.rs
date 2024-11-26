@@ -135,7 +135,7 @@ pub struct DecryptedRoomEvent {
     #[napi(readonly)]
     pub event: String,
 
-    encryption_info: Option<EncryptionInfo>,
+    encryption_info: EncryptionInfo,
 }
 
 #[napi]
@@ -144,7 +144,7 @@ impl DecryptedRoomEvent {
     /// unless the `verification_state` is as well trusted.
     #[napi(getter)]
     pub fn sender(&self) -> Option<identifiers::UserId> {
-        Some(identifiers::UserId::from(self.encryption_info.as_ref()?.sender.clone()))
+        Some(identifiers::UserId::from(self.encryption_info.sender.clone()))
     }
 
     /// The device ID of the device that sent us the event, note this
@@ -152,14 +152,14 @@ impl DecryptedRoomEvent {
     /// trusted.
     #[napi(getter)]
     pub fn sender_device(&self) -> Option<identifiers::DeviceId> {
-        Some(self.encryption_info.as_ref()?.sender_device.as_ref()?.clone().into())
+        Some(self.encryption_info.sender_device.as_ref()?.clone().into())
     }
 
     /// The Curve25519 key of the device that created the megolm
     /// decryption key originally.
     #[napi(getter)]
     pub fn sender_curve25519_key(&self) -> Option<String> {
-        Some(match &self.encryption_info.as_ref()?.algorithm_info {
+        Some(match &self.encryption_info.algorithm_info {
             AlgorithmInfo::MegolmV1AesSha2 { curve25519_key, .. } => curve25519_key.clone(),
         })
     }
@@ -168,7 +168,7 @@ impl DecryptedRoomEvent {
     /// was used to decrypt this session.
     #[napi(getter)]
     pub fn sender_claimed_ed25519_key(&self) -> Option<String> {
-        match &self.encryption_info.as_ref()?.algorithm_info {
+        match &self.encryption_info.algorithm_info {
             AlgorithmInfo::MegolmV1AesSha2 { sender_claimed_keys, .. } => {
                 sender_claimed_keys.get(&ruma::DeviceKeyAlgorithm::Ed25519).cloned()
             }
@@ -188,7 +188,7 @@ impl DecryptedRoomEvent {
     /// verified or deleted.
     #[napi]
     pub fn shield_state(&self, strict: bool) -> Option<encryption::ShieldState> {
-        let state = &self.encryption_info.as_ref()?.verification_state;
+        let state = &self.encryption_info.verification_state;
         if strict {
             Some(state.to_shield_state_strict().into())
         } else {
@@ -197,8 +197,8 @@ impl DecryptedRoomEvent {
     }
 }
 
-impl From<matrix_sdk_common::deserialized_responses::TimelineEvent> for DecryptedRoomEvent {
-    fn from(value: matrix_sdk_common::deserialized_responses::TimelineEvent) -> Self {
-        Self { event: value.event.json().get().to_owned(), encryption_info: value.encryption_info }
+impl From<matrix_sdk_common::deserialized_responses::DecryptedRoomEvent> for DecryptedRoomEvent {
+    fn from(value: matrix_sdk_common::deserialized_responses::DecryptedRoomEvent) -> Self {
+        Self { event: value.event.json().to_string(), encryption_info: value.encryption_info }
     }
 }
