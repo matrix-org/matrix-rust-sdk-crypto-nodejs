@@ -24,8 +24,8 @@ qrcode = ["matrix-sdk-crypto/qrcode"]
 tracing = ["dep:tracing-subscriber"]
 
 [dependencies]
-matrix-sdk-common = { git = "https://github.com/matrix-org/matrix-rust-sdk", rev = "05505a5a48f840be9099cf8548b3fa8ecb6d5283", features = ["js"] }
-matrix-sdk-sqlite = { git = "https://github.com/matrix-org/matrix-rust-sdk", rev = "05505a5a48f840be9099cf8548b3fa8ecb6d5283", features = ["crypto-store"] }
+matrix-sdk-common = { version = "0.9.0", features = ["js"] }
+matrix-sdk-sqlite = { version = "0.9.0", features = ["crypto-store"] }
 napi = { version = "2.16.12", default-features = false, features = ["napi6", "tokio_rt"] }
 napi-derive = "2.16.12"
 ahash = "0.8.11"
@@ -35,8 +35,7 @@ tracing-subscriber = { version = "0.3.18", default-features = false, features = 
 zeroize = "1.8.1"
 
 [dependencies.matrix-sdk-crypto]
-git = "https://github.com/matrix-org/matrix-rust-sdk"
-rev = "05505a5a48f840be9099cf8548b3fa8ecb6d5283"
+version = "0.9.0"
 default-features = false
 features = ["js", "automatic-room-key-forwarding"]
 
