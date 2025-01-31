@@ -99,7 +99,7 @@ jobs:
           cp *.node release-mode-lib.node
           npm run build
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: Failure Files
