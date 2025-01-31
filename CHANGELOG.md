@@ -1,5 +1,9 @@
 # Matrix-Rust-SDK Node.js Bindings
 
+## Next release
+
+-   Update matrix-rust-sdk dependency to 0.9.0.
+
 ## 0.3.0-beta.1 - 2024-11-18
 
 -   Update matrix-rust-sdk dependency.
