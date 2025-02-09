@@ -119,6 +119,9 @@ switch (platform) {
             case "s390x":
                 download_lib("matrix-sdk-crypto.linux-s390x-gnu.node");
                 break;
+            case "riscv64":
+                download_lib("matrix-sdk-crypto.linux-riscv64-gnu.node");
+                break;
             default:
                 throw new Error(`Unsupported architecture on Linux: ${arch}`);
         }

@@ -58,6 +58,11 @@ When installing, NPM will download the corresponding prebuilt Rust library for y
       <td>✅</td>
     </tr>
     <tr>
+      <td rowspan="1"><code>riscv64</code></td>
+      <td><code>riscv64gc-unknown-linux-gnu</code></td>
+      <td>✅</td>
+    </tr>
+    <tr>
       <td rowspan="2">macOS</td>
       <td><code>aarch</code></td>
       <td><code>arch64-apple-darwin</code></td>
