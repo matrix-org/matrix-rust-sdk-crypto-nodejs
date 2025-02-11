@@ -21,16 +21,16 @@ describe("RequestType", () => {
     });
 });
 
-for (const request of [
-    KeysUploadRequest,
-    KeysQueryRequest,
-    KeysClaimRequest,
-    ToDeviceRequest,
-    SignatureUploadRequest,
-    RoomMessageRequest,
-    KeysBackupRequest,
+for (const [request, requestType] of [
+    [KeysUploadRequest, "KeysUploadRequest"],
+    [KeysQueryRequest, "KeysQueryRequest"],
+    [KeysClaimRequest, "KeysClaimRequest"],
+    [ToDeviceRequest, "ToDeviceRequest"],
+    [SignatureUploadRequest, "SignatureUploadRequest"],
+    [RoomMessageRequest, "RoomMessageRequest"],
+    [KeysBackupRequest, "KeysBackupRequest"],
 ]) {
-    describe(request.name, () => {
+    describe(requestType, () => {
         test("cannot be instantiated", () => {
             expect(() => {
                 new request();

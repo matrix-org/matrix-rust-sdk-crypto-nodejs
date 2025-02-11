@@ -1,9 +1,13 @@
 # Matrix-Rust-SDK Node.js Bindings
 
+## Next release
+
+-   Update matrix-rust-sdk dependency to 0.9.0.
+
 ## 0.3.0-beta.1 - 2024-11-18
 
-- Update matrix-rust-sdk dependency.
-- The SignedCurve25519 algorithm is no longer supported.
+-   Update matrix-rust-sdk dependency.
+-   The SignedCurve25519 algorithm is no longer supported.
 
 ## 0.2.0-beta.1 - 2024-06-11
 

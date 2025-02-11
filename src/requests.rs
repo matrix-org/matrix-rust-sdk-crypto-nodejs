@@ -10,8 +10,9 @@ use matrix_sdk_common::ruma::{
     },
     events::EventContent,
 };
-use matrix_sdk_crypto::requests::{
-    KeysBackupRequest as RumaKeysBackupRequest, KeysQueryRequest as RumaKeysQueryRequest,
+use matrix_sdk_crypto::types::requests::{
+    AnyOutgoingRequest, KeysBackupRequest as RumaKeysBackupRequest,
+    KeysQueryRequest as RumaKeysQueryRequest, OutgoingRequest as SdkOutgoingRequest,
     RoomMessageRequest as RumaRoomMessageRequest, ToDeviceRequest as RumaToDeviceRequest,
 };
 use napi::bindgen_prelude::Either6;
@@ -347,7 +348,7 @@ pub type OutgoingRequests = Either6<
     RoomMessageRequest,
 >;
 
-pub(crate) struct OutgoingRequest(pub(crate) matrix_sdk_crypto::OutgoingRequest);
+pub(crate) struct OutgoingRequest(pub(crate) SdkOutgoingRequest);
 
 impl TryFrom<OutgoingRequest> for OutgoingRequests {
     type Error = napi::Error;
@@ -356,27 +357,27 @@ impl TryFrom<OutgoingRequest> for OutgoingRequests {
         let request_id = outgoing_request.0.request_id().to_string();
 
         Ok(match outgoing_request.0.request() {
-            matrix_sdk_crypto::OutgoingRequests::KeysUpload(request) => {
+            AnyOutgoingRequest::KeysUpload(request) => {
                 Either6::A(KeysUploadRequest::try_from((request_id, request))?)
             }
 
-            matrix_sdk_crypto::OutgoingRequests::KeysQuery(request) => {
+            AnyOutgoingRequest::KeysQuery(request) => {
                 Either6::B(KeysQueryRequest::try_from((request_id, request))?)
             }
 
-            matrix_sdk_crypto::OutgoingRequests::KeysClaim(request) => {
+            AnyOutgoingRequest::KeysClaim(request) => {
                 Either6::C(KeysClaimRequest::try_from((request_id, request))?)
             }
 
-            matrix_sdk_crypto::OutgoingRequests::ToDeviceRequest(request) => {
+            AnyOutgoingRequest::ToDeviceRequest(request) => {
                 Either6::D(ToDeviceRequest::try_from((request_id, request))?)
             }
 
-            matrix_sdk_crypto::OutgoingRequests::SignatureUpload(request) => {
+            AnyOutgoingRequest::SignatureUpload(request) => {
                 Either6::E(SignatureUploadRequest::try_from((request_id, request))?)
             }
 
-            matrix_sdk_crypto::OutgoingRequests::RoomMessage(request) => {
+            AnyOutgoingRequest::RoomMessage(request) => {
                 Either6::F(RoomMessageRequest::try_from((request_id, request))?)
             }
         })
