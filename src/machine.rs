@@ -378,6 +378,22 @@ impl OlmMachine {
         Ok(())
     }
 
+    /// Invalidate the currently active outbound group session for the
+    /// given room.
+    ///
+    /// # Arguments
+    ///
+    /// * `room_id`, the ID of the room for which the message should be discarded
+    ///
+    /// Returns true if a session was invalidated, false if there was
+    /// no session to invalidate.
+    #[napi(strict)]
+    pub async fn invalidate_group_session(&self, room_id: &identifiers::RoomId) -> bool {
+        let room_id = room_id.inner.clone();
+
+        self.inner.discard_room_key(&room_id).await.is_ok()
+    }
+
     /// Get to-device requests to share a room key with users in a room.
     ///
     /// # Arguments
