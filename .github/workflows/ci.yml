@@ -38,6 +38,8 @@ jobs:
 
       - name: Install Node.js
         uses: actions/setup-node@v3
+        with:
+          node-version-file: .node-version
 
       - name: Install NPM dependencies
         run: npm install
@@ -135,7 +137,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 20
+          node-version-file: .node-version
 
       - name: Load cache
         uses: Swatinem/rust-cache@v2
