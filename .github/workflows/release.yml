@@ -41,21 +41,21 @@ jobs:
           # ----------------------------------- Linux
           # Use Ubuntu LTS-1 for broader glibc compatibility.
           - target: x86_64-unknown-linux-gnu
-            os: ubuntu-20.04
+            os: ubuntu-22.04
           - target: i686-unknown-linux-gnu
             apt_install: gcc-i686-linux-gnu g++-i686-linux-gnu
-            os: ubuntu-20.04
+            os: ubuntu-22.04
           - target: aarch64-unknown-linux-gnu
-            os: ubuntu-20.04
+            os: ubuntu-22.04
             apt_install: gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
           - target: arm-unknown-linux-gnueabihf
-            os: ubuntu-20.04
+            os: ubuntu-22.04
             apt_install: gcc-arm-linux-gnueabihf
           - target: x86_64-unknown-linux-musl
-            os: ubuntu-20.04
+            os: ubuntu-22.04
             apt_install: musl-tools
           - target: s390x-unknown-linux-gnu
-            os: ubuntu-20.04
+            os: ubuntu-22.04
             apt_install: gcc-s390x-linux-gnu g++-s390x-linux-gnu
           # ----------------------------------- macOS
           - target: aarch64-apple-darwin
