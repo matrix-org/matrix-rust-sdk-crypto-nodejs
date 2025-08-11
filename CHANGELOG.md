@@ -3,6 +3,7 @@
 ## Next release
 
 -   Update matrix-rust-sdk dependency to 0.9.0.
+-   Minimum supported glibc version is now `2.35` (Ubuntu 22.04+ compatible). Support has been dropped for prior versions.
 
 ## 0.3.0-beta.1 - 2024-11-18
 
