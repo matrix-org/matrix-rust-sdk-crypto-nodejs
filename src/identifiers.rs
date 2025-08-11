@@ -224,9 +224,7 @@ impl RoomId {
     #[napi(getter)]
     pub fn server_name(&self) -> Option<ServerName> {
         match self.inner.server_name() {
-            Some(server_name) => Some(ServerName {
-                inner: server_name.to_owned()
-            }),
+            Some(server_name) => Some(ServerName { inner: server_name.to_owned() }),
             None => None,
         }
     }
