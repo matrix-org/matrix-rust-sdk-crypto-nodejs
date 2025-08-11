@@ -219,15 +219,6 @@ impl RoomId {
     pub fn to_string(&self) -> String {
         self.inner.as_str().to_owned()
     }
-
-    /// Returns the server name of the room ID.
-    #[napi(getter)]
-    pub fn server_name(&self) -> Option<ServerName> {
-        match self.inner.server_name() {
-            Some(server_name) => Some(ServerName { inner: server_name.to_owned() }),
-            None => None,
-        }
-    }
 }
 
 /// A Matrix-spec compliant [server name].
