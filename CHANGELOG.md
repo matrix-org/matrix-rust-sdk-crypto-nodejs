@@ -2,7 +2,7 @@
 
 ## Next release
 
--   Update matrix-rust-sdk dependency to 0.9.0.
+-   Update matrix-rust-sdk dependency to 0.13.0.
 -   Support Node.JS 24, drop support for 18.
 -   Support Rust 1.77.
 
