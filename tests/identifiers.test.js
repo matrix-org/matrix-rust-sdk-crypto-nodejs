@@ -87,7 +87,7 @@ describe("DeviceKeyAlgorithmName", () => {
 });
 
 describe(RoomId.name, () => {
-    const roomV12 = new RoomId("!foo")
+    const roomV12 = new RoomId("!foo");
 
     test("may have no server name", () => {
         expect(roomV12.serverName).toStrictEqual(null);
