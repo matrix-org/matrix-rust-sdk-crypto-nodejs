@@ -38,6 +38,8 @@ jobs:
 
       - name: Install Node.js
         uses: actions/setup-node@v3
+        with:
+          node-version-file: .node-version
 
       - name: Install NPM dependencies
         run: npm install
@@ -54,16 +56,16 @@ jobs:
       matrix:
         # Use Ubuntu LTS-1 for broader glibc compatibility.
         os: [ubuntu-22.04]
-        node-version: [18.0, 20.0, 22.0]
+        node-version: [22.0, 24.0]
         include:
           - os: ubuntu-22.04
             os-name: 🐧
 
           - os: macos-latest
             os-name: 🍏
-            node-version: 20.0
+            node-version: 22.0
 
-          - node-version: 20.0
+          - node-version: 22.0
             build-doc: true
 
     steps:
@@ -135,7 +137,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 20
+          node-version-file: .node-version
 
       - name: Load cache
         uses: Swatinem/rust-cache@v2
