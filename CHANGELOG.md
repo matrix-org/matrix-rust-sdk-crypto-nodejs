@@ -3,6 +3,8 @@
 ## Next release
 
 -   Update matrix-rust-sdk dependency to 0.9.0.
+-   `RoomId` no longer has a `serverName` property, and is allowed to not have a server name component.
+    This is a breaking change.
 
 ## 0.3.0-beta.1 - 2024-11-18
 
