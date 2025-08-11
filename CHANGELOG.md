@@ -1,6 +1,6 @@
 # Matrix-Rust-SDK Node.js Bindings
 
-## Next release
+## v0.4.0-beta.1 - 2025-08-11
 
 -   Update matrix-rust-sdk dependency to 0.9.0.
 -   Support Node.JS 24, drop support for 18, 20.
