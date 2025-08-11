@@ -96,13 +96,13 @@ Node.js and npm
 Page](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
 
 The binding is compatible with, and tested against, the Node.js
-versions that are in “current”, “active” or “maintenance” states,
+versions that are in “current” or “active” states,
 according to [the Node.js Releases
 Page](https://nodejs.org/en/about/releases/), _and_ which are
 compatible with [NAPI v6 (Node.js
 API)](https://nodejs.org/api/n-api.html#node-api-version-matrix). It
 means that this binding will work with the following versions:
-20.0.0, 22.0.0 and 24.0.0.
+22.0.0 and 24.0.0.
 
 Once the Rust compiler, Node.js and npm are installed, you can run the
 following commands:

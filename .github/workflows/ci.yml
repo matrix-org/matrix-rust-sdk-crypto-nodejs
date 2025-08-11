@@ -56,16 +56,16 @@ jobs:
       matrix:
         # Use Ubuntu LTS-1 for broader glibc compatibility.
         os: [ubuntu-20.04]
-        node-version: [20.0, 22.0, 24.0]
+        node-version: [22.0, 24.0]
         include:
           - os: ubuntu-20.04
             os-name: 🐧
 
           - os: macos-latest
             os-name: 🍏
-            node-version: 20.0
+            node-version: 22.0
 
-          - node-version: 20.0
+          - node-version: 22.0
             build-doc: true
 
     steps:
