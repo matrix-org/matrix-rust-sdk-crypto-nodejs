@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use matrix_sdk_common::deserialized_responses::{ProcessedToDeviceEvent as SdkProcessedToDeviceEvent};
 use matrix_sdk_crypto::backups::{
     SignatureState as InnerSignatureState, SignatureVerification as InnerSignatureVerification,
 };
@@ -227,4 +228,67 @@ impl SignatureVerification {
     pub fn trusted(&self) -> bool {
         self.inner.trusted()
     }
+}
+
+/// The type of a ProcessedToDeviceEvent.
+#[napi]
+#[derive(Debug)]
+pub enum ProcessedToDeviceEventType {
+    /// A successfully-decrypted encrypted to-device message.
+    Decrypted,
+
+    /// An encrypted to-device message which could not be decrypted.
+    UnableToDecrypt,
+
+    /// An unencrypted to-device message (sent in clear).
+    PlainText,
+
+    /// An invalid to-device message that was ignored because it is missing some
+    /// required information to be processed (like no event `type` for
+    /// example)
+    Invalid,
+}
+
+pub(crate) struct ProcessedToDeviceEvent(pub(crate) SdkProcessedToDeviceEvent);
+
+impl TryFrom<ProcessedToDeviceEvent> for ProcessedToDeviceEventType {
+    
+}
+
+pub fn processed_to_device_event_to_napi_result(
+    processed_to_device_event: matrix_sdk_common::deserialized_responses::ProcessedToDeviceEvent,
+) -> Option<napi::Result<()>> {
+    let result = match processed_to_device_event {
+        matrix_sdk_common::deserialized_responses::ProcessedToDeviceEvent::Decrypted {
+            raw,
+            encryption_info,
+        } => {
+            match encryption_info.try_into() {
+                Ok(encryption_info) => {
+                    DecryptedToDeviceEvent { raw_event: raw.json().get().into(), encryption_info }
+                        .into()
+                }
+                Err(e) => {
+                    // This can only happen if we receive an encrypted to-device event which is
+                    // encrypted with an algorithm we don't recognise. This
+                    // shouldn't really happen, unless the wasm bindings have
+                    // gotten way out of step with the underlying SDK.
+                    //
+                    // There's not a lot we can do here: we just throw away the event.
+                    warn!("Dropping incoming to-device event with invalid encryption_info: {e:?}");
+                    return None;
+                }
+            }
+        }
+        matrix_sdk_common::deserialized_responses::ProcessedToDeviceEvent::UnableToDecrypt(utd) => {
+            UTDToDeviceEvent { raw_event: utd.json().get().into() }.into()
+        }
+        matrix_sdk_common::deserialized_responses::ProcessedToDeviceEvent::PlainText(plain) => {
+            PlainTextToDeviceEvent { raw_event: plain.json().get().into() }.into()
+        }
+        matrix_sdk_common::deserialized_responses::ProcessedToDeviceEvent::Invalid(invalid) => {
+            InvalidToDeviceEvent { raw_event: invalid.json().get().into() }.into()
+        }
+    };
+    Some(result)
 }

@@ -9,7 +9,7 @@ use crate::into_err;
 #[napi]
 #[derive(Debug)]
 pub struct BackupDecryptionKey {
-    pub(crate) inner: store::BackupDecryptionKey,
+    pub(crate) inner: store::types::BackupDecryptionKey,
 }
 
 /// The public part of the backup key.
@@ -40,7 +40,7 @@ impl BackupDecryptionKey {
     #[napi]
     pub fn create_random_key() -> BackupDecryptionKey {
         BackupDecryptionKey {
-            inner: store::BackupDecryptionKey::new()
+            inner: store::types::BackupDecryptionKey::new()
                 .expect("Can't gather enough randomness to create a recovery key"),
         }
     }
@@ -48,7 +48,7 @@ impl BackupDecryptionKey {
     /// Try to create a [`BackupDecryptionKey`] from a base 64 encoded string.
     #[napi(strict)]
     pub fn from_base64(key: String) -> napi::Result<BackupDecryptionKey> {
-        Ok(Self { inner: store::BackupDecryptionKey::from_base64(&key).map_err(into_err)? })
+        Ok(Self { inner: store::types::BackupDecryptionKey::from_base64(&key).map_err(into_err)? })
     }
 
     /// Convert the recovery key to a base 64 encoded string.
@@ -88,8 +88,8 @@ pub struct RoomKeyCounts {
     pub backed_up: f64,
 }
 
-impl From<matrix_sdk_crypto::store::RoomKeyCounts> for RoomKeyCounts {
-    fn from(inner: matrix_sdk_crypto::store::RoomKeyCounts) -> Self {
+impl From<matrix_sdk_crypto::store::types::RoomKeyCounts> for RoomKeyCounts {
+    fn from(inner: matrix_sdk_crypto::store::types::RoomKeyCounts) -> Self {
         RoomKeyCounts {
             // There is no `TryFrom<usize> for f64`, so first downcast the usizes to u32, then back
             // up to f64
