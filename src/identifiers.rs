@@ -210,12 +210,7 @@ impl RoomId {
     #[napi(constructor, strict)]
     pub fn new(id: String) -> napi::Result<Self> {
         let room_id = ruma::RoomId::parse(id).map_err(into_err)?;
-        match room_id.server_name() {
-            Some(_) => Ok(Self::from(room_id)),
-            None => Err(napi::Error::from_reason(
-                "Room ID does not have a valid server_name".to_owned(),
-            )),
-        }
+        Ok(Self::from(room_id))
     }
 
     /// Return the room ID as a string.
@@ -223,12 +218,6 @@ impl RoomId {
     #[allow(clippy::inherent_to_string)]
     pub fn to_string(&self) -> String {
         self.inner.as_str().to_owned()
-    }
-
-    /// Returns the server name of the room ID.
-    #[napi(getter)]
-    pub fn server_name(&self) -> ServerName {
-        ServerName { inner: self.inner.server_name().unwrap().to_owned() }
     }
 }
 
