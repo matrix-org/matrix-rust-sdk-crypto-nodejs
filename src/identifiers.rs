@@ -223,7 +223,13 @@ impl RoomId {
     /// Returns the server name of the room ID.
     #[napi(getter)]
     pub fn server_name(&self) -> ServerName {
-        ServerName { inner: self.inner.server_name().unwrap_or(<&ruma::ServerName>::try_from("").unwrap()).to_owned() }
+        ServerName {
+            inner: self
+                .inner
+                .server_name()
+                .unwrap_or(<&ruma::ServerName>::try_from("").unwrap())
+                .to_owned(),
+        }
     }
 }
 
