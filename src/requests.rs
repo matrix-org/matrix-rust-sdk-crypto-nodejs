@@ -337,7 +337,7 @@ macro_rules! request {
     };
 
     ( @__set_field $map:ident : $grouped_field_name:ident = $field:ident) => {
-        $map.insert(stringify!($grouped_field_name).to_owned(), serde_json::to_value($field).unwrap());
+        $map.insert(stringify!($grouped_field_name).to_owned(), serde_json::to_value($field).map_err(into_err)?);
     };
 }
 
