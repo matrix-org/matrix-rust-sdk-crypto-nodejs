@@ -304,7 +304,6 @@ macro_rules! request {
                                 };
                             )?
                             request!(@__set_field $( $optional )? map : $grouped_field_name = field);
-                            map.insert(stringify!($grouped_field_name).to_owned(), serde_json::to_value(field).map_err(into_err)?);
                         )*
                         let object = serde_json::Value::Object(map);
 
