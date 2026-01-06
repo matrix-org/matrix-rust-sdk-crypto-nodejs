@@ -1,5 +1,9 @@
 # Matrix-Rust-SDK Node.js Bindings
 
+## UNRELEASED
+
+-   Fix malformed `/keys/upload`, `/keys/query` and `/keys/claim` requests.
+
 ## v0.4.0-beta.1 - 2025-08-11
 
 -   Update matrix-rust-sdk dependency to 0.9.0.
