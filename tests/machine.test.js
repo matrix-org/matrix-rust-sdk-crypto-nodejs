@@ -176,8 +176,7 @@ describe(OlmMachine.name, () => {
             expect(outgoingRequests[1].type).toStrictEqual(RequestType.KeysQuery);
 
             const body = JSON.parse(outgoingRequests[1].body);
-            expect(body.timeout).toBeDefined();
-            expect(body.device_keys).toBeDefined();
+            expect(body).toEqual({"device_keys":{"@alice:example.org":[]}});
         }
     });
 
