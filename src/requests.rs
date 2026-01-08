@@ -245,7 +245,7 @@ macro_rules! request {
     (
         $destination_request:ident from $source_request:ident
         $( extracts $( $field_name:ident : $field_type:tt ),+ $(,)? )?
-        $( $( and )? groups $( $grouped_field_name:ident $( { $grouped_field_transformation:expr } )? ),+ $(,)? )?
+        $( $( and )? groups $( $grouped_field_name:ident $( { $grouped_field_transformation:expr } )? $( $optional:literal )? ),+ $(,)? )?
     ) => {
         impl TryFrom<&$source_request> for $destination_request {
             type Error = napi::Error;
@@ -255,7 +255,7 @@ macro_rules! request {
                     @__try_from $destination_request from $source_request
                     (request_id = String::new(), request = request)
                     $( extracts [ $( $field_name : $field_type, )+ ] )?
-                    $( groups [ $( $grouped_field_name $( { $grouped_field_transformation } )? , )+ ] )?
+                    $( groups [ $( $grouped_field_name $( { $grouped_field_transformation } )? $( $optional )? , )+ ] )?
                 )
             }
         }
@@ -270,7 +270,7 @@ macro_rules! request {
                     @__try_from $destination_request from $source_request
                     (request_id = request_id.into(), request = request)
                     $( extracts [ $( $field_name : $field_type, )+ ] )?
-                    $( groups [ $( $grouped_field_name $( { $grouped_field_transformation } )? , )+ ] )?
+                    $( groups [ $( $grouped_field_name $( { $grouped_field_transformation } )? $( $optional )? , )+ ] )?
                 )
             }
         }
@@ -280,7 +280,7 @@ macro_rules! request {
         @__try_from $destination_request:ident from $source_request:ident
         (request_id = $request_id:expr, request = $request:expr)
         $( extracts [ $( $field_name:ident : $field_type:tt ),* $(,)? ] )?
-        $( groups [ $( $grouped_field_name:ident $( { $grouped_field_transformation:expr } )? ),* $(,)? ] )?
+        $( groups [ $( $grouped_field_name:ident $( { $grouped_field_transformation:expr } )? $( $optional:literal )? ),* $(,)? ] )?
     ) => {
         {
             Ok($destination_request {
@@ -303,7 +303,7 @@ macro_rules! request {
                                     $grouped_field_transformation
                                 };
                             )?
-                            map.insert(stringify!($grouped_field_name).to_owned(), serde_json::to_value(field).map_err(into_err)?);
+                            request!(@__set_field $( $optional )? map : $grouped_field_name = field);
                         )*
                         let object = serde_json::Value::Object(map);
 
@@ -329,11 +329,21 @@ macro_rules! request {
     ( @__field_type as event_type ; request = $request:expr, field_name = $field_name:ident ) => {
         $request.content.event_type().to_string().into()
     };
+
+    ( @__set_field $optional:literal $map:ident : $grouped_field_name:ident = $field:ident) => {
+        if let Some($field) = $field {
+            request!(@__set_field $map : $grouped_field_name = $field);
+        }
+    };
+
+    ( @__set_field $map:ident : $grouped_field_name:ident = $field:ident) => {
+        $map.insert(stringify!($grouped_field_name).to_owned(), serde_json::to_value($field).map_err(into_err)?);
+    };
 }
 
-request!(KeysUploadRequest from RumaKeysUploadRequest groups device_keys, one_time_keys, fallback_keys);
-request!(KeysQueryRequest from RumaKeysQueryRequest groups timeout { timeout.as_ref().map(Duration::as_millis).map(u64::try_from).transpose().map_err(into_err)? }, device_keys);
-request!(KeysClaimRequest from RumaKeysClaimRequest groups timeout { timeout.as_ref().map(Duration::as_millis).map(u64::try_from).transpose().map_err(into_err)? }, one_time_keys);
+request!(KeysUploadRequest from RumaKeysUploadRequest groups device_keys "optional", one_time_keys, fallback_keys);
+request!(KeysQueryRequest from RumaKeysQueryRequest groups timeout { timeout.as_ref().map(Duration::as_millis).map(u64::try_from).transpose().map_err(into_err)? } "optional", device_keys);
+request!(KeysClaimRequest from RumaKeysClaimRequest groups timeout { timeout.as_ref().map(Duration::as_millis).map(u64::try_from).transpose().map_err(into_err)? } "optional", one_time_keys);
 request!(ToDeviceRequest from RumaToDeviceRequest extracts event_type: string, txn_id: string and groups messages);
 request!(SignatureUploadRequest from RumaSignatureUploadRequest groups signed_keys);
 request!(RoomMessageRequest from RumaRoomMessageRequest extracts room_id: string, txn_id: string, event_type: event_type, content: json);
