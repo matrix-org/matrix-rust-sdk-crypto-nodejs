@@ -1,3 +1,5 @@
+const { statSync, writeFileSync, readFileSync } = require('fs');
+const path = require('path');
 const { HttpsProxyAgent } = require("https-proxy-agent");
 const { DownloaderHelper } = require("node-downloader-helper");
 const { version } = require("./package.json");
@@ -19,7 +21,24 @@ const byteHelper = function (value) {
     return (value / Math.pow(1024, Math.floor(number))).toFixed(1) + " " + units[number];
 };
 
-function download_lib(libname) {
+async function download_lib(libname) {
+    const VERSION_FILE = path.join(__dirname, libname + ".version");
+    try {
+        statSync(path.join(__dirname, libname));
+        const downloadedVersion = readFileSync(VERSION_FILE, 'utf-8');
+        if (downloadedVersion === version) {
+            console.debug("File already in place, not downloading");
+        }
+        return;
+    } catch (ex) {
+        if (ex.code === 'ENOENT') {
+            // Missing file, continue;
+        } else {
+            console.error(ex);
+            process.exit(1);
+        }
+    }
+
     let startTime = new Date();
 
     const url = `${DOWNLOADS_BASE_URL}/${CURRENT_VERSION}/${libname}`;
@@ -52,21 +71,18 @@ function download_lib(libname) {
             console.info(`${speed}/s - ${progress}% [${downloaded}/${total}]`);
         }
     });
-    dl.start().catch((err) => console.error(err));
+    try {
+        await dl.start();
+        writeFileSync(path.join(__dirname, libname + ".version"), version);
+    } catch (ex) {
+        console.error(err);
+        process.exit(1);
+    }
 }
 
 function isMusl() {
-    // For Node 10
-    if (!process.report || typeof process.report.getReport !== "function") {
-        try {
-            return readFileSync("/usr/bin/ldd", "utf8").includes("musl");
-        } catch (e) {
-            return true;
-        }
-    } else {
-        const { glibcVersionRuntime } = process.report.getReport().header;
-        return !glibcVersionRuntime;
-    }
+    const { glibcVersionRuntime } = process.report.getReport().header;
+    return !glibcVersionRuntime;
 }
 
 switch (platform) {
