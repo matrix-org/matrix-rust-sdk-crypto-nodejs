@@ -27,9 +27,6 @@ on:
         description: "The tag to build with"
         required: true
         type: string
-    secrets:
-      NPM_TOKEN:
-        required: true
 
 jobs:
   upload-assets:
@@ -107,6 +104,9 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - upload-assets
+    permissions:
+      contents: read
+      id-token: write
     steps:
       # use the given tag
       - uses: actions/checkout@v3
@@ -132,8 +132,4 @@ jobs:
           draft: true
           files: "*.tgz"
       - name: Publish to npmjs.com
-        uses: JS-DevTools/npm-publish@v2
-        with:
-          package: package.json
-          access: public
-          token: ${{ secrets.NPM_TOKEN }}
+        run: npm publish
