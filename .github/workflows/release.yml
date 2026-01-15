@@ -27,6 +27,12 @@ on:
         description: "The tag to build with"
         required: true
         type: string
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "The tag to build with"
+        required: true
+        type: string
 
 jobs:
   upload-assets:
