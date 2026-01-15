@@ -131,7 +131,6 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org/
           scope: '@matrix-org'
-          always-auth: true
       - name: Build lib
         run: |
           npm install --ignore-scripts
