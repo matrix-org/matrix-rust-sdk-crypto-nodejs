@@ -126,7 +126,12 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@nightly
       - name: Install Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org/
+          scope: '@matrix-org'
+          always-auth: true
       - name: Build lib
         run: |
           npm install --ignore-scripts
@@ -138,6 +143,6 @@ jobs:
           draft: true
           files: "*.tgz"
       - name: Publish to npmjs.com
-        run: npm publish
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
