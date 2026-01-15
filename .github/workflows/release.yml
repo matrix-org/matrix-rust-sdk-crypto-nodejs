@@ -111,7 +111,7 @@ jobs:
     needs:
       - upload-assets
     permissions:
-      contents: read
+      contents: write
       id-token: write
     steps:
       # use the given tag
