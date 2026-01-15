@@ -1,5 +1,8 @@
 # `matrix-sdk-crypto-nodejs`
 
+> [!WARNING]
+> These bindings are not maintained. Projects may prefer to use the [WASM artifact](https://www.npmjs.com/package/@matrix-org/matrix-sdk-crypto-wasm) instead.
+
 Welcome to the [Node.js] binding for the Rust [`matrix-sdk-crypto`]
 library! This binding is part of the [`matrix-rust-sdk`] project,
 which is a library implementation of a [Matrix] client-server.
