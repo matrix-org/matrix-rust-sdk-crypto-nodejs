@@ -131,6 +131,8 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org/
           scope: '@matrix-org'
+      - name: Upgrade npm for Trusted Publishing
+        run: npm i -g npm@latest
       - name: Build lib
         run: |
           npm install --ignore-scripts
