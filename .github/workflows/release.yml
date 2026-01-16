@@ -131,7 +131,8 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org/
           scope: '@matrix-org'
-          always-auth: true
+      - name: Upgrade npm for Trusted Publishing
+        run: npm i -g npm@latest
       - name: Build lib
         run: |
           npm install --ignore-scripts
@@ -143,6 +144,4 @@ jobs:
           draft: true
           files: "*.tgz"
       - name: Publish to npmjs.com
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public --provenance
