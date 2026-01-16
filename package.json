@@ -5,7 +5,7 @@
     "types": "index.d.ts",
     "repository": {
         "type": "git",
-        "url": "https://github.com/matrix-org/matrix-sdk-crypto-nodejs"
+        "url": "git+https://github.com/matrix-org/matrix-sdk-crypto-nodejs"
     },
     "napi": {
         "name": "matrix-sdk-crypto",
