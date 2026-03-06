@@ -89,6 +89,18 @@ jobs:
           targets: ${{ matrix.target }}
       - name: Install Node.js
         uses: actions/setup-node@v3
+      # Zig is needed on musl targets for reliable linking. In napi V3 this moves from the --zig flag to the --cross-compile flag.
+      # See: https://napi.rs/docs/cross-build
+      # See: https://github.com/napi-rs/callback-example/blob/15855ea37f668df91d24124142895addd33e468f/.github/workflows/CI.yml#L115
+      - uses: mlugg/setup-zig@v2
+        if: ${{ contains(matrix.target, 'musl') }}
+        with:
+          version: 0.14.1
+      - name: Install cargo-zigbuild
+        uses: taiki-e/install-action@v2
+        if: ${{ contains(matrix.target, 'musl') }}
+        with:
+          tool: cargo-zigbuild
       - name: Load cache
         uses: Swatinem/rust-cache@v2
       - if: ${{ matrix.apt_install }}
@@ -98,7 +110,7 @@ jobs:
       - name: Build lib
         run: |
           npm install --ignore-scripts
-          npx napi build --platform --release --strip --target ${{ matrix.target }}
+          npx napi build --platform --release --strip --target ${{ matrix.target }} ${{ contains(matrix.target, 'musl') && '--zig' || '' }}
       - name: Upload artifacts to release
         uses: softprops/action-gh-release@v1
         with:
