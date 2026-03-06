@@ -489,9 +489,13 @@ impl OlmMachine {
     ///   the same request multiple times, setting this argument to false
     ///   enables you to reuse the same request.
     #[napi]
-    pub async fn bootstrap_cross_signing(&self, reset: bool) -> napi::Result<()> {
-        self.inner.bootstrap_cross_signing(reset).await.map_err(into_err)?;
-        Ok(())
+    pub async fn bootstrap_cross_signing(
+        &self,
+        reset: bool,
+    ) -> napi::Result<CrossSigningBootstrapRequests> {
+        let bootstrap_requests =
+            self.inner.bootstrap_cross_signing(reset).await.map_err(into_err)?;
+        CrossSigningBootstrapRequests::try_from(bootstrap_requests)
     }
 
     /// Sign the given message using our device key and if available
@@ -657,5 +661,53 @@ impl OlmMachine {
     #[napi(strict)]
     pub fn close(&mut self) {
         self.inner = OlmMachineInner::Closed;
+    }
+}
+
+#[napi]
+pub struct CrossSigningBootstrapRequests {
+    #[napi(readonly)]
+    pub upload_keys_req: Option<requests::OutgoingRequests>,
+    #[napi(readonly)]
+    pub upload_signing_keys_req: String,
+    #[napi(readonly)]
+    pub upload_signatures_req: requests::SignatureUploadRequest,
+}
+
+impl TryFrom<matrix_sdk_crypto::CrossSigningBootstrapRequests> for CrossSigningBootstrapRequests {
+    type Error = napi::Error;
+    fn try_from(
+        request: matrix_sdk_crypto::CrossSigningBootstrapRequests,
+    ) -> Result<Self, Self::Error> {
+        let upload_signing_keys_req = request.upload_signing_keys_req;
+        let mut upload_signing_keys_map = serde_json::Map::new();
+        upload_signing_keys_map.insert(
+            "master_key".to_owned(),
+            serde_json::to_value(&upload_signing_keys_req.master_key).map_err(into_err)?,
+        );
+        upload_signing_keys_map.insert(
+            "self_signing_key".to_owned(),
+            serde_json::to_value(&upload_signing_keys_req.self_signing_key).map_err(into_err)?,
+        );
+        upload_signing_keys_map.insert(
+            "user_signing_key".to_owned(),
+            serde_json::to_value(&upload_signing_keys_req.user_signing_key).map_err(into_err)?,
+        );
+
+        Ok(Self {
+            upload_keys_req: request
+                .upload_keys_req
+                .map(|upload_keys_req| {
+                    requests::OutgoingRequests::try_from(requests::OutgoingRequest(upload_keys_req))
+                })
+                .transpose()
+                .map_err(into_err)?,
+            upload_signing_keys_req: serde_json::to_string(&serde_json::Value::Object(
+                upload_signing_keys_map,
+            ))
+            .map_err(into_err)?,
+            upload_signatures_req: requests::SignatureUploadRequest::try_from(&request.upload_signatures_req)
+                .map_err(into_err)?,
+        })
     }
 }

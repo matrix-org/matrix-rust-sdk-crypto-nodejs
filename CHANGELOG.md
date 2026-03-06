@@ -2,6 +2,9 @@
 
 ## UNRELEASED
 
+-   `OlmMachine.bootstrap_cross_signing` now returns the requests required to
+    upload the cross-signing keys to the server.
+
 ## v0.4.0 - 2026-01-08
 
 -   Fix malformed `/keys/upload`, `/keys/query` and `/keys/claim` requests. [#56](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/56)
