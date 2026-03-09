@@ -4,6 +4,9 @@
 
 -   `OlmMachine.bootstrap_cross_signing` now returns the requests required to
     upload the cross-signing keys to the server.
+-   Add new functions `OlmMachine.export_secrets_for_secret_storage` and
+    `OlmMachine.import_secrets_from_secret_storage`, along with associated
+    types, for reading and writing to Secret Storage.
 
 ## v0.4.0 - 2026-01-08
 

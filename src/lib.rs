@@ -28,6 +28,7 @@ pub mod machine;
 pub mod olm;
 pub mod requests;
 pub mod responses;
+pub mod secret_storage;
 pub mod sync_events;
 #[cfg(feature = "tracing")]
 pub mod tracing;
