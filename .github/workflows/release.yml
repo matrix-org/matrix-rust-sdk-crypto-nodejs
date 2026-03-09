@@ -87,9 +87,11 @@ jobs:
         with:
           persist-credentials: false
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@nightly
-        with:
-          targets: ${{ matrix.target }}
+        run: |
+          rustup install nightly
+          rustup default nightly
+          rustup component add rustfmt
+          rustup target add ${{ matrix.target }} --toolchain nightly
       - name: Install Node.js
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
       # Zig is needed on musl targets for reliable linking. In napi V3 this moves from the --zig flag to the --cross-compile flag.
@@ -142,7 +144,10 @@ jobs:
         with:
           persist-credentials: false
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@nightly
+        run: |
+          rustup install nightly
+          rustup default nightly
+          rustup component add rustfmt
       - name: Install Node.js
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
