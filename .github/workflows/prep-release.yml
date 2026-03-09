@@ -66,7 +66,9 @@ jobs:
 
       - name: Set version
         id: package_version
-        run: npm version ${{ inputs.version }}
+        run: npm version ${INPUTS_VERSION}
+        env:
+          INPUTS_VERSION: ${{ inputs.version }}
 
       - uses: EndBug/add-and-commit@a94899bca583c204427a224a7af87c02f9b325d5 # v9.1.4
         with:
