@@ -37,13 +37,13 @@ jobs:
     outputs:
       tag: "v${{ inputs.version }}"
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
 
       # Generate changelog since last tag, if given
       - name: Generate a changelog for upload
         if: inputs.previous_version
-        uses: orhun/git-cliff-action@v1
+        uses: orhun/git-cliff-action@c93ef52f3d0ddcdcc9bd5447d98d458a11cd4f72 # v4.7.1
         with:
           config: "cliff.toml"
           args: --strip header "v${{ inputs.previous_version }}..HEAD"
@@ -54,7 +54,7 @@ jobs:
       # Update changelog since last tag, if given
       - name: Update existing Changelog
         if: inputs.previous_version
-        uses: orhun/git-cliff-action@v1
+        uses: orhun/git-cliff-action@c93ef52f3d0ddcdcc9bd5447d98d458a11cd4f72 # v4.7.1
         with:
           config: "cliff.toml"
           args: "v${{ inputs.previous_version }}..HEAD"
@@ -66,7 +66,7 @@ jobs:
         id: package_version
         run: npm version ${{ inputs.version }}
 
-      - uses: EndBug/add-and-commit@v9
+      - uses: EndBug/add-and-commit@a94899bca583c204427a224a7af87c02f9b325d5 # v9.1.4
         with:
           default_author: github_actions
           message: "Tagging Crypto-Node.js for release"
@@ -80,7 +80,7 @@ jobs:
       # if we have generated changes
       - name: Update Github Release notes
         if: inputs.previous_version
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
         with:
           draft: true
           tag_name: "v${{ inputs.version }}"
@@ -89,7 +89,7 @@ jobs:
       # no changes, use the default changelog for the body
       - name: Update Github Release notes
         if: "!inputs.previous_version"
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
         with:
           draft: true
           tag_name: "v${{ inputs.version }}"
@@ -97,7 +97,7 @@ jobs:
 
       # let's create a PR for all this, too
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v4
+        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
         with:
           title: "Preparing Release v${{ inputs.version }}"
           body: |
