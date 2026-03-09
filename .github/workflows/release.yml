@@ -170,9 +170,8 @@ jobs:
           npm run release-build
           npm pack
       - name: Upload npm package to release
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
-        with:
-          draft: true
-          files: "*.tgz"
+        run: gh release upload ${INPUTS_TAG} "*.tgz" --draft
+        env:
+          INPUTS_TAG: ${{ inputs.tag }}
       - name: Publish to npmjs.com
         run: npm publish --access public --provenance
