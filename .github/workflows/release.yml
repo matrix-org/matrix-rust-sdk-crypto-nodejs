@@ -11,6 +11,8 @@ name: Release Crypto-Node.js
 # The usual way to trigger this is by manually triggering the `prep-release`
 # workflow. See its documentation for instructions how to use it.
 
+permissions: {}
+
 env:
   CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: 'aarch64-linux-gnu-gcc'
   CARGO_TARGET_I686_UNKNOWN_LINUX_GNU_LINKER: 'i686-linux-gnu-gcc'
@@ -75,34 +77,45 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       # use the given tag
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         name: "Checking out ${{ inputs.tag }}"
         if: "${{ inputs.tag }}"
         with:
           ref: ${{ inputs.tag }}
+          persist-credentials: false
       # use the default
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         if: "${{ !inputs.tag }}"
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@nightly
         with:
-          targets: ${{ matrix.target }}
+          persist-credentials: false
+      - name: Install Rust
+        run: |
+          rustup install nightly
+          rustup default nightly
+          rustup component add rustfmt
+          rustup target add ${{ matrix.target }} --toolchain nightly
       - name: Install Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          cache: ""
+          package-manager-cache: false
       # Zig is needed on musl targets for reliable linking. In napi V3 this moves from the --zig flag to the --cross-compile flag.
       # See: https://napi.rs/docs/cross-build
       # See: https://github.com/napi-rs/callback-example/blob/15855ea37f668df91d24124142895addd33e468f/.github/workflows/CI.yml#L115
-      - uses: mlugg/setup-zig@v2
+      - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
         if: ${{ contains(matrix.target, 'musl') }}
         with:
           version: 0.14.1
+          use-cache: false
       - name: Install cargo-zigbuild
-        uses: taiki-e/install-action@v2
+        uses: taiki-e/install-action@a37010ded18ff788be4440302bd6830b1ae50d8b # v2.68.25
         if: ${{ contains(matrix.target, 'musl') }}
         with:
           tool: cargo-zigbuild
       - name: Load cache
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+        with:
+          lookup-only: true
       - if: ${{ matrix.apt_install }}
         run: |
           sudo apt-get update
@@ -112,10 +125,10 @@ jobs:
           npm install --ignore-scripts
           npx napi build --platform --release --strip --target ${{ matrix.target }} ${{ contains(matrix.target, 'musl') && '--zig' || '' }}
       - name: Upload artifacts to release
-        uses: softprops/action-gh-release@v1
-        with:
-          draft: true
-          files: "*.node"
+        run: |
+          gh release upload "$INPUTS_TAG" "*.node" --draft
+        environment:
+          INPUTS_TAG: ${{ inputs.tag }}
 
   publish-nodejs-package:
     name: "Package nodejs package"
@@ -127,22 +140,30 @@ jobs:
       id-token: write
     steps:
       # use the given tag
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         name: "Checking out ${{ inputs.tag }}"
         if: "${{ inputs.tag }}"
         with:
           ref: ${{ inputs.tag }}
+          persist-credentials: false
       # use the default
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         if: "${{ !inputs.tag }}"
+        with:
+          persist-credentials: false
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@nightly
+        run: |
+          rustup install nightly
+          rustup default nightly
+          rustup component add rustfmt
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org/
           scope: '@matrix-org'
+          cache: ""
+          package-manager-cache: false
       - name: Upgrade npm for Trusted Publishing
         run: npm i -g npm@latest
       - name: Build lib
@@ -151,9 +172,9 @@ jobs:
           npm run release-build
           npm pack
       - name: Upload npm package to release
-        uses: softprops/action-gh-release@v1
-        with:
-          draft: true
-          files: "*.tgz"
+        run: |
+          gh release upload "${INPUTS_TAG}" "*.tgz" --draft
+        env:
+          INPUTS_TAG: ${{ inputs.tag }}
       - name: Publish to npmjs.com
         run: npm publish --access public --provenance
