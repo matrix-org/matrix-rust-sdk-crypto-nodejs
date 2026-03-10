@@ -19,6 +19,8 @@ name: Prepare Crypto-Node.js Release
 #
 #  The remaining tasks are done by the `release` workflow.
 
+permissions: {}
+
 on:
   workflow_dispatch:
     inputs:

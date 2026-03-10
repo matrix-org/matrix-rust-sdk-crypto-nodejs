@@ -11,6 +11,8 @@ name: Release Crypto-Node.js
 # The usual way to trigger this is by manually triggering the `prep-release`
 # workflow. See its documentation for instructions how to use it.
 
+permissions: {}
+
 env:
   CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: 'aarch64-linux-gnu-gcc'
   CARGO_TARGET_I686_UNKNOWN_LINUX_GNU_LINKER: 'i686-linux-gnu-gcc'
