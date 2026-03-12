@@ -19,6 +19,7 @@ const {
     getVersions,
     SignatureState,
     BackupDecryptionKey,
+    SecretStorageKey,
 } = require("../");
 const path = require("path");
 const os = require("os");
@@ -595,6 +596,54 @@ describe(OlmMachine.name, () => {
 
             expect(savedKey.decryptionKeyBase64).toStrictEqual(keyBackupKey.toBase64());
             expect(savedKey.backupVersion).toStrictEqual("3");
+        });
+    });
+
+    describe("secret storage", () => {
+        test("can save to and load from secret storage", async () => {
+            // create cross-signing keys on one machine
+            const m = await machine();
+            const bootstrapRequests = await m.bootstrapCrossSigning(true);
+            const crossSigningKeys = JSON.parse(bootstrapRequests.uploadSigningKeysReq);
+
+            // and create secret storage
+            const secretStorageKey = SecretStorageKey.createRandomKey();
+            const secretEvents = await m.exportSecretsForSecretStorage(secretStorageKey);
+
+            // create a new machine and load the public cross-signing keys
+            const m2 = await machine();
+            const outgoingRequests = await m2.outgoingRequests();
+            const keysUploadResponse = JSON.stringify({
+                one_time_key_counts: {
+                    signed_curve25519: 100,
+                },
+            });
+            await m2.markRequestAsSent(outgoingRequests[0].id, outgoingRequests[0].type, keysUploadResponse);
+            const deviceKeys = JSON.parse(outgoingRequests[0].body).device_keys;
+
+            const keysQueryResponse = JSON.stringify({
+                device_keys: {
+                    "@alice:example.org": {
+                        foobar: deviceKeys,
+                    },
+                },
+                failures: {},
+                master_keys: {
+                    "@alice:example.org": crossSigningKeys.master_key,
+                },
+                self_signing_keys: {
+                    "@alice:example.org": crossSigningKeys.self_signing_key,
+                },
+                user_signing_keys: {
+                    "@alice:example.org": crossSigningKeys.user_signing_key,
+                },
+            });
+            await m2.markRequestAsSent(outgoingRequests[1].id, outgoingRequests[1].type, keysQueryResponse);
+
+            // After we load the secrets from secret storage, we should have the
+            // signed device keys available for upload
+            const request = await m2.importSecretsFromSecretStorage(secretStorageKey, secretEvents);
+            expect(JSON.parse(request.body).signed_keys).toHaveProperty(["@alice:example.org", "foobar"]);
         });
     });
 });

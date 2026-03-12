@@ -27,6 +27,7 @@ use crate::into_err;
 ///
 /// [specification]: https://spec.matrix.org/unstable/client-server-api/#post_matrixclientv3keysupload
 #[napi]
+#[derive(Clone)]
 pub struct KeysUploadRequest {
     /// The request ID.
     #[napi(readonly)]
@@ -56,6 +57,7 @@ impl KeysUploadRequest {
 ///
 /// [specification]: https://spec.matrix.org/unstable/client-server-api/#post_matrixclientv3keysquery
 #[napi]
+#[derive(Clone)]
 pub struct KeysQueryRequest {
     /// The request ID.
     #[napi(readonly)]
@@ -87,6 +89,7 @@ impl KeysQueryRequest {
 ///
 /// [specification]: https://spec.matrix.org/unstable/client-server-api/#post_matrixclientv3keysclaim
 #[napi]
+#[derive(Clone)]
 pub struct KeysClaimRequest {
     /// The request ID.
     #[napi(readonly)]
@@ -117,6 +120,7 @@ impl KeysClaimRequest {
 ///
 /// [specification]: https://spec.matrix.org/unstable/client-server-api/#put_matrixclientv3sendtodeviceeventtypetxnid
 #[napi]
+#[derive(Clone)]
 pub struct ToDeviceRequest {
     /// The request ID.
     #[napi(readonly)]
@@ -154,6 +158,7 @@ impl ToDeviceRequest {
 ///
 /// [specification]: https://spec.matrix.org/unstable/client-server-api/#post_matrixclientv3keyssignaturesupload
 #[napi]
+#[derive(Clone)]
 pub struct SignatureUploadRequest {
     /// The request ID.
     #[napi(readonly)]
@@ -180,6 +185,7 @@ impl SignatureUploadRequest {
 ///
 /// [specification]: https://spec.matrix.org/unstable/client-server-api/#put_matrixclientv3roomsroomidsendeventtypetxnid
 #[napi]
+#[derive(Clone)]
 pub struct RoomMessageRequest {
     /// The request ID.
     #[napi(readonly)]
@@ -220,6 +226,7 @@ impl RoomMessageRequest {
 ///
 /// [specification]: https://spec.matrix.org/unstable/client-server-api/#put_matrixclientv3room_keyskeys
 #[napi]
+#[derive(Clone)]
 pub struct KeysBackupRequest {
     /// The request ID.
     #[napi(readonly)]
