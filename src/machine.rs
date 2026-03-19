@@ -13,7 +13,9 @@ use matrix_sdk_common::ruma::{
     OneTimeKeyAlgorithm, OwnedTransactionId, UInt,
 };
 use matrix_sdk_crypto::{
-    backups::MegolmV1BackupKey, secret_storage::AesHmacSha2EncryptedData, types::RoomKeyBackupInfo,
+    backups::MegolmV1BackupKey,
+    secret_storage::AesHmacSha2EncryptedData,
+    types::{requests::AnyOutgoingRequest, RoomKeyBackupInfo},
     DecryptionSettings, EncryptionSyncChanges, TrustRequirement,
 };
 use napi::bindgen_prelude::{within_runtime_if_available, Either6};
@@ -790,7 +792,7 @@ impl OlmMachine {
 #[napi]
 pub struct CrossSigningBootstrapRequests {
     #[napi(readonly)]
-    pub upload_keys_req: Option<requests::OutgoingRequests>,
+    pub upload_keys_req: Option<requests::KeysUploadRequest>,
     #[napi(readonly)]
     pub upload_signing_keys_req: String,
     #[napi(readonly)]
@@ -802,6 +804,19 @@ impl TryFrom<matrix_sdk_crypto::CrossSigningBootstrapRequests> for CrossSigningB
     fn try_from(
         request: matrix_sdk_crypto::CrossSigningBootstrapRequests,
     ) -> Result<Self, Self::Error> {
+        let upload_keys_req = request
+            .upload_keys_req
+            .map(|upload_keys_req| match upload_keys_req.request() {
+                AnyOutgoingRequest::KeysUpload(request) => requests::KeysUploadRequest::try_from((
+                    upload_keys_req.request_id().to_string(),
+                    request,
+                ))
+                .map_err(into_err),
+                _ => Err(napi::Error::from_reason(
+                    "internal error: wrong type of request for upload keys request",
+                )),
+            })
+            .transpose()?;
         let upload_signing_keys_req = request.upload_signing_keys_req;
         let mut upload_signing_keys_map = serde_json::Map::new();
         upload_signing_keys_map.insert(
@@ -818,13 +833,7 @@ impl TryFrom<matrix_sdk_crypto::CrossSigningBootstrapRequests> for CrossSigningB
         );
 
         Ok(Self {
-            upload_keys_req: request
-                .upload_keys_req
-                .map(|upload_keys_req| {
-                    requests::OutgoingRequests::try_from(requests::OutgoingRequest(upload_keys_req))
-                })
-                .transpose()
-                .map_err(into_err)?,
+            upload_keys_req,
             upload_signing_keys_req: serde_json::to_string(&serde_json::Value::Object(
                 upload_signing_keys_map,
             ))
