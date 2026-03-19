@@ -27,6 +27,7 @@ use crate::into_err;
 ///
 /// [specification]: https://spec.matrix.org/unstable/client-server-api/#post_matrixclientv3keysupload
 #[napi]
+#[derive(Clone)]
 pub struct KeysUploadRequest {
     /// The request ID.
     #[napi(readonly)]
@@ -154,6 +155,7 @@ impl ToDeviceRequest {
 ///
 /// [specification]: https://spec.matrix.org/unstable/client-server-api/#post_matrixclientv3keyssignaturesupload
 #[napi]
+#[derive(Clone)]
 pub struct SignatureUploadRequest {
     /// The request ID.
     #[napi(readonly)]

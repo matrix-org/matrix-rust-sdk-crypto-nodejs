@@ -7,20 +7,27 @@ use std::{
     sync::Arc,
 };
 
-use matrix_sdk_common::ruma::{serde::Raw, OneTimeKeyAlgorithm, OwnedTransactionId, UInt};
+use matrix_sdk_common::ruma::{
+    events::{secret::request::SecretName, secret_storage::secret::SecretEncryptedData},
+    serde::Raw,
+    OneTimeKeyAlgorithm, OwnedTransactionId, UInt,
+};
 use matrix_sdk_crypto::{
-    backups::MegolmV1BackupKey, types::RoomKeyBackupInfo, DecryptionSettings,
-    EncryptionSyncChanges, TrustRequirement,
+    backups::MegolmV1BackupKey,
+    secret_storage::AesHmacSha2EncryptedData,
+    types::{requests::AnyOutgoingRequest, RoomKeyBackupInfo},
+    DecryptionSettings, EncryptionSyncChanges, TrustRequirement,
 };
 use napi::bindgen_prelude::{within_runtime_if_available, Either6};
 use napi_derive::*;
-use serde_json::value::RawValue;
+use serde_json::{json, value::RawValue};
 use zeroize::Zeroize;
 
 use crate::{
     backup::{BackupDecryptionKey, BackupKeys, RoomKeyCounts},
-    encryption, identifiers, into_err, olm, requests, responses,
-    responses::response_from_string,
+    encryption, identifiers, into_err, olm, requests,
+    responses::{self, response_from_string},
+    secret_storage::{SecretStorageEvents, SecretStorageKey},
     sync_events,
     types::{self, SignatureVerification},
     vodozemac,
@@ -489,9 +496,13 @@ impl OlmMachine {
     ///   the same request multiple times, setting this argument to false
     ///   enables you to reuse the same request.
     #[napi]
-    pub async fn bootstrap_cross_signing(&self, reset: bool) -> napi::Result<()> {
-        self.inner.bootstrap_cross_signing(reset).await.map_err(into_err)?;
-        Ok(())
+    pub async fn bootstrap_cross_signing(
+        &self,
+        reset: bool,
+    ) -> napi::Result<CrossSigningBootstrapRequests> {
+        let bootstrap_requests =
+            self.inner.bootstrap_cross_signing(reset).await.map_err(into_err)?;
+        CrossSigningBootstrapRequests::try_from(bootstrap_requests)
     }
 
     /// Sign the given message using our device key and if available
@@ -657,5 +668,180 @@ impl OlmMachine {
     #[napi(strict)]
     pub fn close(&mut self) {
         self.inner = OlmMachineInner::Closed;
+    }
+
+    /// Exports the client's secrets to store in Secret Storage
+    ///
+    /// Returns the events to store in account data.
+    ///
+    /// Currently only exports the cross-signing keys.
+    #[napi]
+    pub async fn export_secrets_for_secret_storage(
+        &self,
+        secret_storage_key: &SecretStorageKey,
+    ) -> napi::Result<SecretStorageEvents> {
+        let secret_storage_key = &secret_storage_key.inner;
+        let bundle = self.inner.store().export_secrets_bundle().await.map_err(into_err)?;
+        let encrypted_master_key = secret_storage_key.encrypt(
+            bundle.cross_signing.master_key.as_bytes().to_vec(),
+            &SecretName::CrossSigningMasterKey,
+        );
+        let encrypted_user_signing_key = secret_storage_key.encrypt(
+            bundle.cross_signing.user_signing_key.as_bytes().to_vec(),
+            &SecretName::CrossSigningUserSigningKey,
+        );
+        let encrypted_self_signing_key = secret_storage_key.encrypt(
+            bundle.cross_signing.self_signing_key.as_bytes().to_vec(),
+            &SecretName::CrossSigningSelfSigningKey,
+        );
+        let key_id = secret_storage_key.key_id();
+        let master_key_event = json!({
+            "encrypted": {
+                key_id: SecretEncryptedData::from(encrypted_master_key)
+            }
+        })
+        .to_string();
+        let user_signing_key_event = json!({
+            "encrypted": {
+                key_id: SecretEncryptedData::from(encrypted_user_signing_key)
+            }
+        })
+        .to_string();
+        let self_signing_key_event = json!({
+            "encrypted": {
+                key_id: SecretEncryptedData::from(encrypted_self_signing_key)
+            }
+        })
+        .to_string();
+        Ok(SecretStorageEvents { master_key_event, user_signing_key_event, self_signing_key_event })
+    }
+
+    fn decrypt_secret_storage_event(
+        name: &SecretName,
+        secret_storage_key: &matrix_sdk_crypto::secret_storage::SecretStorageKey,
+        event: &str,
+    ) -> napi::Result<Vec<u8>> {
+        let mut key_data = serde_json::from_str::<serde_json::Value>(event).map_err(into_err)?;
+        let key_data = key_data
+            .get_mut("encrypted")
+            .ok_or(napi::Error::from_reason(format!(
+                "{name} does not have valid secret storage data"
+            )))?
+            .get_mut(secret_storage_key.key_id())
+            .ok_or(napi::Error::from_reason(format!("{name} not encrypted with key")))?
+            .take();
+        let key_data: SecretEncryptedData = serde_json::from_value(key_data).map_err(into_err)?;
+        let key_data = AesHmacSha2EncryptedData::try_from(key_data).map_err(into_err)?;
+        secret_storage_key.decrypt(&key_data, name).map_err(into_err)
+    }
+
+    /// Imports secrets from Secret Storage
+    #[napi]
+    pub async fn import_secrets_from_secret_storage(
+        &self,
+        secret_storage_key: &SecretStorageKey,
+        events: &SecretStorageEvents,
+    ) -> napi::Result<requests::SignatureUploadRequest> {
+        let secret_storage_key = &secret_storage_key.inner;
+
+        let master_key = Self::decrypt_secret_storage_event(
+            &SecretName::CrossSigningMasterKey,
+            secret_storage_key,
+            &events.master_key_event,
+        )?;
+        let self_signing_key = Self::decrypt_secret_storage_event(
+            &SecretName::CrossSigningSelfSigningKey,
+            secret_storage_key,
+            &events.self_signing_key_event,
+        )?;
+        let user_signing_key = Self::decrypt_secret_storage_event(
+            &SecretName::CrossSigningUserSigningKey,
+            secret_storage_key,
+            &events.user_signing_key_event,
+        )?;
+        let export = matrix_sdk_crypto::CrossSigningKeyExport {
+            master_key: Some(String::from_utf8(master_key).map_err(into_err)?),
+            self_signing_key: Some(String::from_utf8(self_signing_key).map_err(into_err)?),
+            user_signing_key: Some(String::from_utf8(user_signing_key).map_err(into_err)?),
+        };
+        self.inner.import_cross_signing_keys(export).await.map_err(into_err)?;
+
+        // Check that the keys actually got imported.  Sometimes the import will
+        // fail silently if public keys are missing.
+        let cross_signing_status = self.inner.cross_signing_status().await;
+        if !(cross_signing_status.has_master
+            && cross_signing_status.has_self_signing
+            && cross_signing_status.has_user_signing)
+        {
+            return Err(napi::Error::from_reason("failed to import the keys"));
+        }
+
+        // self-sign, and return the signature request
+        let device = self
+            .inner
+            .get_device(self.inner.user_id(), self.inner.device_id(), None)
+            .await
+            .map_err(into_err)?
+            .ok_or(napi::Error::from_reason("internal error: failed to fetch our own device"))?;
+        let signature_upload_request = device.verify().await.map_err(into_err)?;
+
+        requests::SignatureUploadRequest::try_from(&signature_upload_request).map_err(into_err)
+    }
+}
+
+#[napi]
+pub struct CrossSigningBootstrapRequests {
+    #[napi(readonly)]
+    pub upload_keys_req: Option<requests::KeysUploadRequest>,
+    #[napi(readonly)]
+    pub upload_signing_keys_req: String,
+    #[napi(readonly)]
+    pub upload_signatures_req: requests::SignatureUploadRequest,
+}
+
+impl TryFrom<matrix_sdk_crypto::CrossSigningBootstrapRequests> for CrossSigningBootstrapRequests {
+    type Error = napi::Error;
+    fn try_from(
+        request: matrix_sdk_crypto::CrossSigningBootstrapRequests,
+    ) -> Result<Self, Self::Error> {
+        let upload_keys_req = request
+            .upload_keys_req
+            .map(|upload_keys_req| match upload_keys_req.request() {
+                AnyOutgoingRequest::KeysUpload(request) => requests::KeysUploadRequest::try_from((
+                    upload_keys_req.request_id().to_string(),
+                    request,
+                ))
+                .map_err(into_err),
+                _ => Err(napi::Error::from_reason(
+                    "internal error: wrong type of request for upload keys request",
+                )),
+            })
+            .transpose()?;
+        let upload_signing_keys_req = request.upload_signing_keys_req;
+        let mut upload_signing_keys_map = serde_json::Map::new();
+        upload_signing_keys_map.insert(
+            "master_key".to_owned(),
+            serde_json::to_value(&upload_signing_keys_req.master_key).map_err(into_err)?,
+        );
+        upload_signing_keys_map.insert(
+            "self_signing_key".to_owned(),
+            serde_json::to_value(&upload_signing_keys_req.self_signing_key).map_err(into_err)?,
+        );
+        upload_signing_keys_map.insert(
+            "user_signing_key".to_owned(),
+            serde_json::to_value(&upload_signing_keys_req.user_signing_key).map_err(into_err)?,
+        );
+
+        Ok(Self {
+            upload_keys_req,
+            upload_signing_keys_req: serde_json::to_string(&serde_json::Value::Object(
+                upload_signing_keys_map,
+            ))
+            .map_err(into_err)?,
+            upload_signatures_req: requests::SignatureUploadRequest::try_from(
+                &request.upload_signatures_req,
+            )
+            .map_err(into_err)?,
+        })
     }
 }
