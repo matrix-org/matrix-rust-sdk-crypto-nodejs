@@ -62,13 +62,15 @@ impl SecretStorageKey {
         })
     }
 
-    /// `Export the [`SecretStorageKey`] as a base58-encoded string.
+    /// Export the [`SecretStorageKey`] as a base58-encoded string.
     #[napi]
     pub fn to_base58(&self) -> String {
         self.inner.to_base58()
     }
 
-    /// Encrypt a secret string as a Secret Storage secret
+    /// Encrypt a secret string as a Secret Storage secret.
+    ///
+    /// Returns the JSON-encoded contents to store in Account Data
     #[napi]
     pub fn encrypt(&self, plaintext: Vec<u8>, secret_name: String) -> AesHmacSha2EncryptedData {
         AesHmacSha2EncryptedData {
@@ -86,8 +88,8 @@ impl SecretStorageKey {
         self.inner.decrypt(&data.inner, &SecretName::from(secret_name)).map_err(into_err)
     }
 
-    /// The info about the [`SecretStorageKey`], as an event content for storing
-    /// in account data.
+    /// The info about the [`SecretStorageKey`], as an item for storing in
+    /// account data.
     ///
     /// Returns a JSON-encoded object
     #[napi]

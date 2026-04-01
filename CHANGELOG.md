@@ -3,10 +3,10 @@
 ## UNRELEASED
 
 -   `OlmMachine.bootstrap_cross_signing` now returns the requests required to
-    upload the cross-signing keys to the server.
+    upload the cross-signing keys to the server. [#67](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/67)
 -   Add new functions `OlmMachine.export_secrets_for_secret_storage` and
     `OlmMachine.import_secrets_from_secret_storage`, along with associated
-    types, for reading and writing to Secret Storage.
+    types, for reading and writing to Secret Storage. [#67](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/67)
 
 ## v0.4.0 - 2026-01-08
 

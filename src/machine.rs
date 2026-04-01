@@ -480,6 +480,9 @@ impl OlmMachine {
     /// Create a new cross signing identity and get the upload request
     /// to push the new public keys to the server.
     ///
+    /// Returns the requests that need to be sent to the server to upload the
+    /// required keys and signatures.
+    ///
     /// Warning: This will delete any existing cross signing keys that
     /// might exist on the server and thus will reset the trust
     /// between all the devices.
@@ -670,9 +673,10 @@ impl OlmMachine {
         self.inner = OlmMachineInner::Closed;
     }
 
-    /// Exports the client's secrets to store in Secret Storage
+    /// Exports the client's secrets to store in Secret Storage, encrypted using
+    /// the given secret storage key.
     ///
-    /// Returns the events to store in account data.
+    /// Returns the items to store in account data.
     ///
     /// Currently only exports the cross-signing keys.
     #[napi]
