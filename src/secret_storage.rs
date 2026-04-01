@@ -106,14 +106,14 @@ impl SecretStorageKey {
     ) -> napi::Result<String> {
         let mut content: SecretEventContent =
             serde_json::from_str(account_data_content_json).map_err(into_err)?;
-        let key_data = content
+        let secret_data = content
             .encrypted
             .remove(self.inner.key_id())
             .ok_or(napi::Error::from_reason(format!("{secret_name} not encrypted with key")))?;
-        let key_data =
-            secret_storage::AesHmacSha2EncryptedData::try_from(key_data).map_err(into_err)?;
-        let master_key = self.inner.decrypt(&key_data, secret_name).map_err(into_err)?;
-        String::from_utf8(master_key).map_err(into_err)
+        let secret_data =
+            secret_storage::AesHmacSha2EncryptedData::try_from(secret_data).map_err(into_err)?;
+        let secret = self.inner.decrypt(&secret_data, secret_name).map_err(into_err)?;
+        String::from_utf8(secret).map_err(into_err)
     }
 
     /// The info about the [`SecretStorageKey`], as an item for storing in
