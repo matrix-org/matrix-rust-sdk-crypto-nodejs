@@ -3,11 +3,13 @@
 use std::collections::HashMap;
 
 use matrix_sdk_common::ruma::events::{
-    secret::request::SecretName, secret_storage::key::SecretStorageKeyEventContent,
+    secret::request::SecretName,
+    secret_storage::{key::SecretStorageKeyEventContent, secret::SecretEncryptedData},
     EventContentFromType,
 };
 use matrix_sdk_crypto::secret_storage;
 use napi_derive::napi;
+use serde_json::json;
 
 use crate::into_err;
 
@@ -16,12 +18,6 @@ use crate::into_err;
 #[derive(Debug)]
 pub struct SecretStorageKey {
     pub(crate) inner: secret_storage::SecretStorageKey,
-}
-
-#[napi]
-#[derive(Debug)]
-pub struct AesHmacSha2EncryptedData {
-    pub(crate) inner: secret_storage::AesHmacSha2EncryptedData,
 }
 
 #[napi]
@@ -72,20 +68,54 @@ impl SecretStorageKey {
     ///
     /// Returns the JSON-encoded contents to store in Account Data
     #[napi]
-    pub fn encrypt(&self, plaintext: Vec<u8>, secret_name: String) -> AesHmacSha2EncryptedData {
-        AesHmacSha2EncryptedData {
-            inner: self.inner.encrypt(plaintext, &SecretName::from(secret_name)),
-        }
+    pub fn encrypt(&self, plaintext: String, secret_name: String) -> String {
+        self.encrypt_rust(plaintext, &SecretName::from(secret_name))
     }
 
-    /// Decrypt the given [`AesHmacSha2EncryptedData`]
+    /// Same as `encrypt`, but takes the Rust version of the secret_name
+    pub(crate) fn encrypt_rust(&self, plaintext: String, secret_name: &SecretName) -> String {
+        let plaintext_string = plaintext.as_bytes().to_vec();
+        let encrypted_data = self.inner.encrypt(plaintext_string, secret_name);
+        json!({
+            "encrypted": {
+                self.key_id(): SecretEncryptedData::from(encrypted_data)
+            }
+        })
+        .to_string()
+    }
+
+    /// Decrypt the given Secret Storage item, given as the JSON-encoded
+    /// contents.
     #[napi]
     pub fn decrypt(
         &self,
-        data: &AesHmacSha2EncryptedData,
+        account_data_content_json: String,
         secret_name: String,
-    ) -> napi::Result<Vec<u8>> {
-        self.inner.decrypt(&data.inner, &SecretName::from(secret_name)).map_err(into_err)
+    ) -> napi::Result<String> {
+        self.decrypt_rust(&account_data_content_json, &SecretName::from(secret_name))
+    }
+
+    /// Same as `decrypt`, but takes the Rust version of the secret_name
+    pub(crate) fn decrypt_rust(
+        &self,
+        account_data_content_json: &str,
+        secret_name: &SecretName,
+    ) -> napi::Result<String> {
+        let mut key_data = serde_json::from_str::<serde_json::Value>(account_data_content_json)
+            .map_err(into_err)?;
+        let key_data = key_data
+            .get_mut("encrypted")
+            .ok_or(napi::Error::from_reason(format!(
+                "{secret_name} does not have valid secret storage data"
+            )))?
+            .get_mut(self.inner.key_id())
+            .ok_or(napi::Error::from_reason(format!("{secret_name} not encrypted with key")))?
+            .take();
+        let key_data: SecretEncryptedData = serde_json::from_value(key_data).map_err(into_err)?;
+        let key_data =
+            secret_storage::AesHmacSha2EncryptedData::try_from(key_data).map_err(into_err)?;
+        let master_key = self.inner.decrypt(&key_data, secret_name).map_err(into_err)?;
+        String::from_utf8(master_key).map_err(into_err)
     }
 
     /// The info about the [`SecretStorageKey`], as an item for storing in
@@ -93,7 +123,7 @@ impl SecretStorageKey {
     ///
     /// Returns a JSON-encoded object
     #[napi]
-    pub fn event_content(&self) -> napi::Result<String> {
+    pub fn account_data_content(&self) -> napi::Result<String> {
         serde_json::to_string(self.inner.event_content()).map_err(into_err)
     }
 
@@ -111,28 +141,28 @@ impl SecretStorageKey {
 }
 
 #[napi]
-/// The account data events containing the secrets, encoded as JSON
-pub struct SecretStorageEvents {
-    pub master_key_event: String,
-    pub user_signing_key_event: String,
-    pub self_signing_key_event: String,
+/// The account data items containing the secrets, encoded as JSON
+pub struct SecretStorageItems {
+    pub master_key: String,
+    pub user_signing_key: String,
+    pub self_signing_key: String,
 }
 
 #[napi]
-impl SecretStorageEvents {
+impl SecretStorageItems {
     #[napi(constructor)]
-    pub fn new(events: HashMap<String, String>) -> napi::Result<Self> {
-        Ok(SecretStorageEvents {
-            master_key_event: events
-                .get("masterKeyEvent")
+    pub fn new(items: HashMap<String, String>) -> napi::Result<Self> {
+        Ok(SecretStorageItems {
+            master_key: items
+                .get("masterKey")
                 .ok_or(napi::Error::from_reason("missing master key"))?
                 .to_string(),
-            user_signing_key_event: events
-                .get("userSigningKeyEvent")
+            user_signing_key: items
+                .get("userSigningKey")
                 .ok_or(napi::Error::from_reason("missing user signing key"))?
                 .to_string(),
-            self_signing_key_event: events
-                .get("selfSigningKeyEvent")
+            self_signing_key: items
+                .get("selfSigningKey")
                 .ok_or(napi::Error::from_reason("missing self signing key"))?
                 .to_string(),
         })

@@ -8,26 +8,22 @@ use std::{
 };
 
 use matrix_sdk_common::ruma::{
-    events::{secret::request::SecretName, secret_storage::secret::SecretEncryptedData},
-    serde::Raw,
-    OneTimeKeyAlgorithm, OwnedTransactionId, UInt,
+    events::secret::request::SecretName, serde::Raw, OneTimeKeyAlgorithm, OwnedTransactionId, UInt,
 };
 use matrix_sdk_crypto::{
-    backups::MegolmV1BackupKey,
-    secret_storage::AesHmacSha2EncryptedData,
-    types::{requests::AnyOutgoingRequest, RoomKeyBackupInfo},
-    DecryptionSettings, EncryptionSyncChanges, TrustRequirement,
+    backups::MegolmV1BackupKey, types::RoomKeyBackupInfo, DecryptionSettings,
+    EncryptionSyncChanges, TrustRequirement,
 };
 use napi::bindgen_prelude::{within_runtime_if_available, Either6};
 use napi_derive::*;
-use serde_json::{json, value::RawValue};
+use serde_json::value::RawValue;
 use zeroize::Zeroize;
 
 use crate::{
     backup::{BackupDecryptionKey, BackupKeys, RoomKeyCounts},
     encryption, identifiers, into_err, olm, requests,
     responses::{self, response_from_string},
-    secret_storage::{SecretStorageEvents, SecretStorageKey},
+    secret_storage::{SecretStorageItems, SecretStorageKey},
     sync_events,
     types::{self, SignatureVerification},
     vodozemac,
@@ -683,60 +679,21 @@ impl OlmMachine {
     pub async fn export_secrets_for_secret_storage(
         &self,
         secret_storage_key: &SecretStorageKey,
-    ) -> napi::Result<SecretStorageEvents> {
-        let secret_storage_key = &secret_storage_key.inner;
+    ) -> napi::Result<SecretStorageItems> {
         let bundle = self.inner.store().export_secrets_bundle().await.map_err(into_err)?;
-        let encrypted_master_key = secret_storage_key.encrypt(
-            bundle.cross_signing.master_key.as_bytes().to_vec(),
+        let master_key = secret_storage_key.encrypt_rust(
+            bundle.cross_signing.master_key.clone(),
             &SecretName::CrossSigningMasterKey,
         );
-        let encrypted_user_signing_key = secret_storage_key.encrypt(
-            bundle.cross_signing.user_signing_key.as_bytes().to_vec(),
+        let user_signing_key = secret_storage_key.encrypt_rust(
+            bundle.cross_signing.user_signing_key.clone(),
             &SecretName::CrossSigningUserSigningKey,
         );
-        let encrypted_self_signing_key = secret_storage_key.encrypt(
-            bundle.cross_signing.self_signing_key.as_bytes().to_vec(),
+        let self_signing_key = secret_storage_key.encrypt_rust(
+            bundle.cross_signing.self_signing_key.clone(),
             &SecretName::CrossSigningSelfSigningKey,
         );
-        let key_id = secret_storage_key.key_id();
-        let master_key_event = json!({
-            "encrypted": {
-                key_id: SecretEncryptedData::from(encrypted_master_key)
-            }
-        })
-        .to_string();
-        let user_signing_key_event = json!({
-            "encrypted": {
-                key_id: SecretEncryptedData::from(encrypted_user_signing_key)
-            }
-        })
-        .to_string();
-        let self_signing_key_event = json!({
-            "encrypted": {
-                key_id: SecretEncryptedData::from(encrypted_self_signing_key)
-            }
-        })
-        .to_string();
-        Ok(SecretStorageEvents { master_key_event, user_signing_key_event, self_signing_key_event })
-    }
-
-    fn decrypt_secret_storage_event(
-        name: &SecretName,
-        secret_storage_key: &matrix_sdk_crypto::secret_storage::SecretStorageKey,
-        event: &str,
-    ) -> napi::Result<Vec<u8>> {
-        let mut key_data = serde_json::from_str::<serde_json::Value>(event).map_err(into_err)?;
-        let key_data = key_data
-            .get_mut("encrypted")
-            .ok_or(napi::Error::from_reason(format!(
-                "{name} does not have valid secret storage data"
-            )))?
-            .get_mut(secret_storage_key.key_id())
-            .ok_or(napi::Error::from_reason(format!("{name} not encrypted with key")))?
-            .take();
-        let key_data: SecretEncryptedData = serde_json::from_value(key_data).map_err(into_err)?;
-        let key_data = AesHmacSha2EncryptedData::try_from(key_data).map_err(into_err)?;
-        secret_storage_key.decrypt(&key_data, name).map_err(into_err)
+        Ok(SecretStorageItems { master_key, user_signing_key, self_signing_key })
     }
 
     /// Imports secrets from Secret Storage
@@ -744,29 +701,18 @@ impl OlmMachine {
     pub async fn import_secrets_from_secret_storage(
         &self,
         secret_storage_key: &SecretStorageKey,
-        events: &SecretStorageEvents,
+        items: &SecretStorageItems,
     ) -> napi::Result<requests::SignatureUploadRequest> {
-        let secret_storage_key = &secret_storage_key.inner;
-
-        let master_key = Self::decrypt_secret_storage_event(
-            &SecretName::CrossSigningMasterKey,
-            secret_storage_key,
-            &events.master_key_event,
-        )?;
-        let self_signing_key = Self::decrypt_secret_storage_event(
-            &SecretName::CrossSigningSelfSigningKey,
-            secret_storage_key,
-            &events.self_signing_key_event,
-        )?;
-        let user_signing_key = Self::decrypt_secret_storage_event(
-            &SecretName::CrossSigningUserSigningKey,
-            secret_storage_key,
-            &events.user_signing_key_event,
-        )?;
+        let master_key = secret_storage_key
+            .decrypt_rust(&items.master_key, &SecretName::CrossSigningMasterKey)?;
+        let self_signing_key = secret_storage_key
+            .decrypt_rust(&items.self_signing_key, &SecretName::CrossSigningSelfSigningKey)?;
+        let user_signing_key = secret_storage_key
+            .decrypt_rust(&items.user_signing_key, &SecretName::CrossSigningUserSigningKey)?;
         let export = matrix_sdk_crypto::CrossSigningKeyExport {
-            master_key: Some(String::from_utf8(master_key).map_err(into_err)?),
-            self_signing_key: Some(String::from_utf8(self_signing_key).map_err(into_err)?),
-            user_signing_key: Some(String::from_utf8(user_signing_key).map_err(into_err)?),
+            master_key: Some(master_key),
+            self_signing_key: Some(self_signing_key),
+            user_signing_key: Some(user_signing_key),
         };
         self.inner.import_cross_signing_keys(export).await.map_err(into_err)?;
 
