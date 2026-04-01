@@ -686,15 +686,15 @@ impl OlmMachine {
         let master_key = secret_storage_key.encrypt_rust(
             bundle.cross_signing.master_key.clone(),
             &SecretName::CrossSigningMasterKey,
-        );
+        )?;
         let user_signing_key = secret_storage_key.encrypt_rust(
             bundle.cross_signing.user_signing_key.clone(),
             &SecretName::CrossSigningUserSigningKey,
-        );
+        )?;
         let self_signing_key = secret_storage_key.encrypt_rust(
             bundle.cross_signing.self_signing_key.clone(),
             &SecretName::CrossSigningSelfSigningKey,
-        );
+        )?;
         Ok(SecretStorageItems { master_key, user_signing_key, self_signing_key })
     }
 

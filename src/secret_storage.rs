@@ -1,15 +1,17 @@
 //! Helpers for implementing the Secret Storage mechanism.
 
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use matrix_sdk_common::ruma::events::{
     secret::request::SecretName,
-    secret_storage::{key::SecretStorageKeyEventContent, secret::SecretEncryptedData},
+    secret_storage::{
+        key::SecretStorageKeyEventContent,
+        secret::{SecretEncryptedData, SecretEventContent},
+    },
     EventContentFromType,
 };
 use matrix_sdk_crypto::secret_storage;
 use napi_derive::napi;
-use serde_json::json;
 
 use crate::into_err;
 
@@ -68,20 +70,21 @@ impl SecretStorageKey {
     ///
     /// Returns the JSON-encoded contents to store in Account Data
     #[napi]
-    pub fn encrypt(&self, plaintext: String, secret_name: String) -> String {
+    pub fn encrypt(&self, plaintext: String, secret_name: String) -> napi::Result<String> {
         self.encrypt_rust(plaintext, &SecretName::from(secret_name))
     }
 
     /// Same as `encrypt`, but takes the Rust version of the secret_name
-    pub(crate) fn encrypt_rust(&self, plaintext: String, secret_name: &SecretName) -> String {
+    pub(crate) fn encrypt_rust(
+        &self,
+        plaintext: String,
+        secret_name: &SecretName,
+    ) -> napi::Result<String> {
         let plaintext_string = plaintext.as_bytes().to_vec();
         let encrypted_data = self.inner.encrypt(plaintext_string, secret_name);
-        json!({
-            "encrypted": {
-                self.key_id(): SecretEncryptedData::from(encrypted_data)
-            }
-        })
-        .to_string()
+        let mut encrypted = BTreeMap::new();
+        encrypted.insert(self.key_id(), SecretEncryptedData::from(encrypted_data));
+        serde_json::to_string(&SecretEventContent::new(encrypted)).map_err(into_err)
     }
 
     /// Decrypt the given Secret Storage item, given as the JSON-encoded
@@ -101,17 +104,12 @@ impl SecretStorageKey {
         account_data_content_json: &str,
         secret_name: &SecretName,
     ) -> napi::Result<String> {
-        let mut key_data = serde_json::from_str::<serde_json::Value>(account_data_content_json)
-            .map_err(into_err)?;
-        let key_data = key_data
-            .get_mut("encrypted")
-            .ok_or(napi::Error::from_reason(format!(
-                "{secret_name} does not have valid secret storage data"
-            )))?
-            .get_mut(self.inner.key_id())
-            .ok_or(napi::Error::from_reason(format!("{secret_name} not encrypted with key")))?
-            .take();
-        let key_data: SecretEncryptedData = serde_json::from_value(key_data).map_err(into_err)?;
+        let mut content: SecretEventContent =
+            serde_json::from_str(account_data_content_json).map_err(into_err)?;
+        let key_data = content
+            .encrypted
+            .remove(self.inner.key_id())
+            .ok_or(napi::Error::from_reason(format!("{secret_name} not encrypted with key")))?;
         let key_data =
             secret_storage::AesHmacSha2EncryptedData::try_from(key_data).map_err(into_err)?;
         let master_key = self.inner.decrypt(&key_data, secret_name).map_err(into_err)?;
