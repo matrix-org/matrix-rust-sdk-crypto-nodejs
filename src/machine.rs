@@ -5,6 +5,7 @@ use std::{
     mem::ManuallyDrop,
     ops::Deref,
     sync::Arc,
+    time::Duration,
 };
 
 use matrix_sdk_common::ruma::{
@@ -21,6 +22,7 @@ use zeroize::Zeroize;
 
 use crate::{
     backup::{BackupDecryptionKey, BackupKeys, RoomKeyCounts},
+    device::Device,
     encryption, identifiers, into_err, olm, requests,
     responses::{self, response_from_string},
     secret_storage::{SecretStorageItems, SecretStorageKey},
@@ -736,5 +738,21 @@ impl OlmMachine {
         let signature_upload_request = device.verify().await.map_err(into_err)?;
 
         requests::SignatureUploadRequest::try_from(&signature_upload_request).map_err(into_err)
+    }
+
+    /// Get information about a device
+    #[napi]
+    pub async fn get_device(
+        &self,
+        user_id: &identifiers::UserId,
+        device_id: &identifiers::DeviceId,
+        timeout: Option<f64>,
+    ) -> napi::Result<Option<Device>> {
+        let device = self
+            .inner
+            .get_device(&user_id.inner, &device_id.inner, timeout.map(Duration::from_secs_f64))
+            .await
+            .map_err(into_err)?;
+        Ok(device.map(|device| device.into()))
     }
 }

@@ -20,6 +20,7 @@ use napi_derive::napi;
 
 pub mod attachment;
 pub mod backup;
+pub mod device;
 pub mod encryption;
 mod errors;
 pub mod events;
