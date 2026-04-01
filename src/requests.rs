@@ -420,3 +420,67 @@ pub enum RequestType {
     /// Represents a `KeysBackupRequest`.
     KeysBackup,
 }
+
+#[napi]
+/// The requests needed to upload the cross-signing data to the server
+pub struct CrossSigningBootstrapRequests {
+    /// The request to upload the device's keys.
+    ///
+    /// Could be `None` if the device keys have already been uploaded.
+    #[napi(readonly)]
+    pub upload_keys_req: Option<KeysUploadRequest>,
+    /// The request to upload the cross-signing keys, as a JSON-encoded string.
+    ///
+    /// This request does not have a request ID, and `mark_request_as_sent` does
+    /// not need to be called for this request, so only the request body is
+    /// provided.
+    #[napi(readonly)]
+    pub upload_signing_keys_req: String,
+    #[napi(readonly)]
+    /// The request to upload the cross-signing signatures.
+    pub upload_signatures_req: SignatureUploadRequest,
+}
+
+impl TryFrom<matrix_sdk_crypto::CrossSigningBootstrapRequests> for CrossSigningBootstrapRequests {
+    type Error = napi::Error;
+    fn try_from(
+        request: matrix_sdk_crypto::CrossSigningBootstrapRequests,
+    ) -> Result<Self, Self::Error> {
+        let upload_keys_req = request
+            .upload_keys_req
+            .map(|upload_keys_req| match upload_keys_req.request() {
+                AnyOutgoingRequest::KeysUpload(request) => {
+                    KeysUploadRequest::try_from((upload_keys_req.request_id().to_string(), request))
+                        .map_err(into_err)
+                }
+                _ => Err(napi::Error::from_reason(
+                    "internal error: wrong type of request for upload keys request",
+                )),
+            })
+            .transpose()?;
+        let upload_signing_keys_req = request.upload_signing_keys_req;
+        let mut upload_signing_keys_map = serde_json::Map::new();
+        upload_signing_keys_map.insert(
+            "master_key".to_owned(),
+            serde_json::to_value(&upload_signing_keys_req.master_key).map_err(into_err)?,
+        );
+        upload_signing_keys_map.insert(
+            "self_signing_key".to_owned(),
+            serde_json::to_value(&upload_signing_keys_req.self_signing_key).map_err(into_err)?,
+        );
+        upload_signing_keys_map.insert(
+            "user_signing_key".to_owned(),
+            serde_json::to_value(&upload_signing_keys_req.user_signing_key).map_err(into_err)?,
+        );
+
+        Ok(Self {
+            upload_keys_req,
+            upload_signing_keys_req: serde_json::to_string(&serde_json::Value::Object(
+                upload_signing_keys_map,
+            ))
+            .map_err(into_err)?,
+            upload_signatures_req: SignatureUploadRequest::try_from(&request.upload_signatures_req)
+                .map_err(into_err)?,
+        })
+    }
+}
