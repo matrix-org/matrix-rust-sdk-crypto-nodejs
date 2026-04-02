@@ -452,11 +452,11 @@ describe(OlmMachine.name, () => {
         // expect that it  should be there since we haven't uploaded device keys
         // yet.
         let uploadKeysReqBody = JSON.parse(requests.uploadKeysReq.body);
-        expect(uploadKeysReqBody.device_keys.user_id).toEqual("@alice:example.org")
+        expect(uploadKeysReqBody.device_keys.user_id).toEqual("@alice:example.org");
 
         let uploadSigningKeysReqBody = JSON.parse(requests.uploadSigningKeysReq);
-        expect(uploadSigningKeysReqBody.master_key.user_id).toEqual("@alice:example.org")
-        expect(uploadSigningKeysReqBody.master_key.usage).toEqual(["master"])
+        expect(uploadSigningKeysReqBody.master_key.user_id).toEqual("@alice:example.org");
+        expect(uploadSigningKeysReqBody.master_key.usage).toEqual(["master"]);
         let uploadSignaturesReqBody = JSON.parse(requests.uploadSignaturesReq.body);
         expect(uploadSignaturesReqBody.signed_keys["@alice:example.org"]).toHaveProperty("foobar");
 
