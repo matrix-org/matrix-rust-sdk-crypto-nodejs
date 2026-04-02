@@ -30,7 +30,7 @@ impl SecretStorageKey {
         Self { inner: secret_storage::SecretStorageKey::new() }
     }
 
-    /// Create a new passphrase-based [`SecretStorageKey`]
+    /// Create a new passphrase-based [`SecretStorageKey`].
     #[napi]
     pub fn create_from_passphrase(passphrase: String) -> Self {
         Self { inner: secret_storage::SecretStorageKey::new_from_passphrase(&passphrase) }
@@ -68,14 +68,23 @@ impl SecretStorageKey {
 
     /// Encrypt a secret string as a Secret Storage secret.
     ///
-    /// Returns the JSON-encoded contents to store in Account Data
-    #[napi]
-    pub fn encrypt(&self, plaintext: String, secret_name: String) -> napi::Result<String> {
-        self.encrypt_rust(plaintext, &SecretName::from(secret_name))
+    /// Returns the JSON-encoded contents to store in Account Data.
+    #[napi(js_name = "encrypt")]
+    pub fn encrypt_with_string_name(
+        &self,
+        plaintext: String,
+        secret_name: String,
+    ) -> napi::Result<String> {
+        self.encrypt(plaintext, &SecretName::from(secret_name))
     }
 
-    /// Same as `encrypt`, but takes the Rust version of the secret_name
-    pub(crate) fn encrypt_rust(
+    /// Encrypt a secret string as a Secret Storage secret.
+    ///
+    /// Returns the JSON-encoded contents to store in Account Data.
+    ///
+    /// This is the same as `encrypt_with_string_name`, but takes the Rust
+    /// version of the `secret_name`.
+    pub(crate) fn encrypt(
         &self,
         plaintext: String,
         secret_name: &SecretName,
@@ -89,17 +98,21 @@ impl SecretStorageKey {
 
     /// Decrypt the given Secret Storage item, given as the JSON-encoded
     /// contents.
-    #[napi]
-    pub fn decrypt(
+    #[napi(js_name = "decrypt")]
+    pub fn decrypt_with_string_name(
         &self,
         account_data_content_json: String,
         secret_name: String,
     ) -> napi::Result<String> {
-        self.decrypt_rust(&account_data_content_json, &SecretName::from(secret_name))
+        self.decrypt(&account_data_content_json, &SecretName::from(secret_name))
     }
 
-    /// Same as `decrypt`, but takes the Rust version of the secret_name
-    pub(crate) fn decrypt_rust(
+    /// Decrypt the given Secret Storage item, given as the JSON-encoded
+    /// contents.
+    ///
+    /// This is the same as `decrypt_with_string_name`, but takes the Rust
+    /// version of the `secret_name`.
+    pub(crate) fn decrypt(
         &self,
         account_data_content_json: &str,
         secret_name: &SecretName,
@@ -119,13 +132,13 @@ impl SecretStorageKey {
     /// The info about the [`SecretStorageKey`], as an item for storing in
     /// account data.
     ///
-    /// Returns a JSON-encoded object
+    /// Returns a JSON-encoded object.
     #[napi]
     pub fn account_data_content(&self) -> napi::Result<String> {
         serde_json::to_string(self.inner.event_content()).map_err(into_err)
     }
 
-    /// The unique ID of this [`SecretStorageKey`]
+    /// The unique ID of this [`SecretStorageKey`].
     #[napi]
     pub fn key_id(&self) -> String {
         self.inner.key_id().to_owned()

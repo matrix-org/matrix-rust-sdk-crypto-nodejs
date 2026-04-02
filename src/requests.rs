@@ -17,6 +17,7 @@ use matrix_sdk_crypto::types::requests::{
 };
 use napi::bindgen_prelude::Either6;
 use napi_derive::*;
+use serde_json::json;
 
 use crate::into_err;
 
@@ -429,6 +430,7 @@ pub struct CrossSigningBootstrapRequests {
     /// Could be `None` if the device keys have already been uploaded.
     #[napi(readonly)]
     pub upload_keys_req: Option<KeysUploadRequest>,
+
     /// The request to upload the cross-signing keys, as a JSON-encoded string.
     ///
     /// This request does not have a request ID, and `mark_request_as_sent` does
@@ -436,8 +438,9 @@ pub struct CrossSigningBootstrapRequests {
     /// provided.
     #[napi(readonly)]
     pub upload_signing_keys_req: String,
-    #[napi(readonly)]
+
     /// The request to upload the cross-signing signatures.
+    #[napi(readonly)]
     pub upload_signatures_req: SignatureUploadRequest,
 }
 
@@ -459,28 +462,17 @@ impl TryFrom<matrix_sdk_crypto::CrossSigningBootstrapRequests> for CrossSigningB
             })
             .transpose()?;
         let upload_signing_keys_req = request.upload_signing_keys_req;
-        let mut upload_signing_keys_map = serde_json::Map::new();
-        upload_signing_keys_map.insert(
-            "master_key".to_owned(),
-            serde_json::to_value(&upload_signing_keys_req.master_key).map_err(into_err)?,
-        );
-        upload_signing_keys_map.insert(
-            "self_signing_key".to_owned(),
-            serde_json::to_value(&upload_signing_keys_req.self_signing_key).map_err(into_err)?,
-        );
-        upload_signing_keys_map.insert(
-            "user_signing_key".to_owned(),
-            serde_json::to_value(&upload_signing_keys_req.user_signing_key).map_err(into_err)?,
-        );
+        let upload_signing_keys_map = json!({
+            "master_key": upload_signing_keys_req.master_key,
+            "self_signing_key": upload_signing_keys_req.self_signing_key,
+            "user_signing_key": upload_signing_keys_req.user_signing_key,
+        });
 
         Ok(Self {
             upload_keys_req,
-            upload_signing_keys_req: serde_json::to_string(&serde_json::Value::Object(
-                upload_signing_keys_map,
-            ))
-            .map_err(into_err)?,
-            upload_signatures_req: SignatureUploadRequest::try_from(&request.upload_signatures_req)
+            upload_signing_keys_req: serde_json::to_string(&upload_signing_keys_map)
                 .map_err(into_err)?,
+            upload_signatures_req: (&request.upload_signatures_req).try_into()?,
         })
     }
 }

@@ -671,7 +671,7 @@ impl OlmMachine {
         self.inner = OlmMachineInner::Closed;
     }
 
-    /// Exports the client's secrets to store in Secret Storage, encrypted using
+    /// Export the client's secrets to store in Secret Storage, encrypted using
     /// the given secret storage key.
     ///
     /// Returns the items to store in account data.
@@ -683,34 +683,36 @@ impl OlmMachine {
         secret_storage_key: &SecretStorageKey,
     ) -> napi::Result<SecretStorageItems> {
         let bundle = self.inner.store().export_secrets_bundle().await.map_err(into_err)?;
-        let master_key = secret_storage_key.encrypt_rust(
-            bundle.cross_signing.master_key.clone(),
-            &SecretName::CrossSigningMasterKey,
-        )?;
-        let user_signing_key = secret_storage_key.encrypt_rust(
+        let master_key = secret_storage_key
+            .encrypt(bundle.cross_signing.master_key.clone(), &SecretName::CrossSigningMasterKey)?;
+        let user_signing_key = secret_storage_key.encrypt(
             bundle.cross_signing.user_signing_key.clone(),
             &SecretName::CrossSigningUserSigningKey,
         )?;
-        let self_signing_key = secret_storage_key.encrypt_rust(
+        let self_signing_key = secret_storage_key.encrypt(
             bundle.cross_signing.self_signing_key.clone(),
             &SecretName::CrossSigningSelfSigningKey,
         )?;
         Ok(SecretStorageItems { master_key, user_signing_key, self_signing_key })
     }
 
-    /// Imports secrets from Secret Storage
+    /// Import secrets from Secret Storage, and signs the device's key with the
+    /// user's self-signing key.
+    ///
+    /// Returns a signature upload request to upload the signature to the
+    /// server.
     #[napi]
     pub async fn import_secrets_from_secret_storage(
         &self,
         secret_storage_key: &SecretStorageKey,
         items: &SecretStorageItems,
     ) -> napi::Result<requests::SignatureUploadRequest> {
-        let master_key = secret_storage_key
-            .decrypt_rust(&items.master_key, &SecretName::CrossSigningMasterKey)?;
+        let master_key =
+            secret_storage_key.decrypt(&items.master_key, &SecretName::CrossSigningMasterKey)?;
         let self_signing_key = secret_storage_key
-            .decrypt_rust(&items.self_signing_key, &SecretName::CrossSigningSelfSigningKey)?;
+            .decrypt(&items.self_signing_key, &SecretName::CrossSigningSelfSigningKey)?;
         let user_signing_key = secret_storage_key
-            .decrypt_rust(&items.user_signing_key, &SecretName::CrossSigningUserSigningKey)?;
+            .decrypt(&items.user_signing_key, &SecretName::CrossSigningUserSigningKey)?;
         let export = matrix_sdk_crypto::CrossSigningKeyExport {
             master_key: Some(master_key),
             self_signing_key: Some(self_signing_key),
@@ -740,7 +742,7 @@ impl OlmMachine {
         requests::SignatureUploadRequest::try_from(&signature_upload_request).map_err(into_err)
     }
 
-    /// Get information about a device
+    /// Get information about a device.
     #[napi]
     pub async fn get_device(
         &self,

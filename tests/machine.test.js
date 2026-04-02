@@ -443,6 +443,32 @@ describe(OlmMachine.name, () => {
         expect(crossSigningStatus.hasUserSigning).toStrictEqual(false);
     });
 
+    test("can bootstrap cross-signing", async () => {
+        let m = await machine();
+        let requests = await m.bootstrapCrossSigning(true);
+
+        // Check that the requests are roughly in the format we expect.
+        // Usually, requests.uploadKeysReq could be missing, but in this case we
+        // expect that it  should be there since we haven't uploaded device keys
+        // yet.
+        let uploadKeysReqBody = JSON.parse(requests.uploadKeysReq.body);
+        expect(uploadKeysReqBody.device_keys.user_id).toEqual("@alice:example.org")
+
+        let uploadSigningKeysReqBody = JSON.parse(requests.uploadSigningKeysReq);
+        expect(uploadSigningKeysReqBody.master_key.user_id).toEqual("@alice:example.org")
+        expect(uploadSigningKeysReqBody.master_key.usage).toEqual(["master"])
+        let uploadSignaturesReqBody = JSON.parse(requests.uploadSignaturesReq.body);
+        expect(uploadSignaturesReqBody.signed_keys["@alice:example.org"]).toHaveProperty("foobar");
+
+        // Our cross-signing status should say that we have all the keys.
+        const crossSigningStatus = await m.crossSigningStatus();
+
+        expect(crossSigningStatus).toBeInstanceOf(CrossSigningStatus);
+        expect(crossSigningStatus.hasMaster).toStrictEqual(true);
+        expect(crossSigningStatus.hasSelfSigning).toStrictEqual(true);
+        expect(crossSigningStatus.hasUserSigning).toStrictEqual(true);
+    });
+
     test("can sign a message", async () => {
         const m = await machine();
         const signatures = await m.sign("foo");
