@@ -89,7 +89,7 @@ impl SecretStorageKey {
         plaintext: String,
         secret_name: &SecretName,
     ) -> napi::Result<String> {
-        let plaintext_string = plaintext.as_bytes().to_vec();
+        let plaintext_string = plaintext.into_bytes();
         let encrypted_data = self.inner.encrypt(plaintext_string, secret_name);
         let mut encrypted = BTreeMap::new();
         encrypted.insert(self.key_id(), SecretEncryptedData::from(encrypted_data));

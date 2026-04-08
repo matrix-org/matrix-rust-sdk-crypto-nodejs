@@ -696,7 +696,7 @@ impl OlmMachine {
         Ok(SecretStorageItems { master_key, user_signing_key, self_signing_key })
     }
 
-    /// Import secrets from Secret Storage, and signs the device's key with the
+    /// Import secrets from Secret Storage, and sign the device's key with the
     /// user's self-signing key.
     ///
     /// Returns a signature upload request to upload the signature to the

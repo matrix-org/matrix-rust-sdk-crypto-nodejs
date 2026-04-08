@@ -454,7 +454,6 @@ impl TryFrom<matrix_sdk_crypto::CrossSigningBootstrapRequests> for CrossSigningB
             .map(|upload_keys_req| match upload_keys_req.request() {
                 AnyOutgoingRequest::KeysUpload(request) => {
                     KeysUploadRequest::try_from((upload_keys_req.request_id().to_string(), request))
-                        .map_err(into_err)
                 }
                 _ => Err(napi::Error::from_reason(
                     "internal error: wrong type of request for upload keys request",
