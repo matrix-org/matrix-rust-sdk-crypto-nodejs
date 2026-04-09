@@ -17,6 +17,7 @@ use matrix_sdk_crypto::types::requests::{
 };
 use napi::bindgen_prelude::Either6;
 use napi_derive::*;
+use serde_json::json;
 
 use crate::into_err;
 
@@ -27,6 +28,7 @@ use crate::into_err;
 ///
 /// [specification]: https://spec.matrix.org/unstable/client-server-api/#post_matrixclientv3keysupload
 #[napi]
+#[derive(Clone)]
 pub struct KeysUploadRequest {
     /// The request ID.
     #[napi(readonly)]
@@ -154,6 +156,7 @@ impl ToDeviceRequest {
 ///
 /// [specification]: https://spec.matrix.org/unstable/client-server-api/#post_matrixclientv3keyssignaturesupload
 #[napi]
+#[derive(Clone)]
 pub struct SignatureUploadRequest {
     /// The request ID.
     #[napi(readonly)]
@@ -417,4 +420,58 @@ pub enum RequestType {
 
     /// Represents a `KeysBackupRequest`.
     KeysBackup,
+}
+
+#[napi]
+/// The requests needed to upload the cross-signing data to the server
+pub struct CrossSigningBootstrapRequests {
+    /// The request to upload the device's keys.
+    ///
+    /// Could be `None` if the device keys have already been uploaded.
+    #[napi(readonly)]
+    pub upload_keys_req: Option<KeysUploadRequest>,
+
+    /// The request to upload the cross-signing keys, as a JSON-encoded string.
+    ///
+    /// This request does not have a request ID, and `mark_request_as_sent` does
+    /// not need to be called for this request, so only the request body is
+    /// provided.
+    #[napi(readonly)]
+    pub upload_signing_keys_req: String,
+
+    /// The request to upload the cross-signing signatures.
+    #[napi(readonly)]
+    pub upload_signatures_req: SignatureUploadRequest,
+}
+
+impl TryFrom<matrix_sdk_crypto::CrossSigningBootstrapRequests> for CrossSigningBootstrapRequests {
+    type Error = napi::Error;
+    fn try_from(
+        request: matrix_sdk_crypto::CrossSigningBootstrapRequests,
+    ) -> Result<Self, Self::Error> {
+        let upload_keys_req = request
+            .upload_keys_req
+            .map(|upload_keys_req| match upload_keys_req.request() {
+                AnyOutgoingRequest::KeysUpload(request) => {
+                    KeysUploadRequest::try_from((upload_keys_req.request_id().to_string(), request))
+                }
+                _ => Err(napi::Error::from_reason(
+                    "internal error: wrong type of request for upload keys request",
+                )),
+            })
+            .transpose()?;
+        let upload_signing_keys_req = request.upload_signing_keys_req;
+        let upload_signing_keys_map = json!({
+            "master_key": upload_signing_keys_req.master_key,
+            "self_signing_key": upload_signing_keys_req.self_signing_key,
+            "user_signing_key": upload_signing_keys_req.user_signing_key,
+        });
+
+        Ok(Self {
+            upload_keys_req,
+            upload_signing_keys_req: serde_json::to_string(&upload_signing_keys_map)
+                .map_err(into_err)?,
+            upload_signatures_req: (&request.upload_signatures_req).try_into()?,
+        })
+    }
 }
