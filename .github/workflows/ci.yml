@@ -68,7 +68,6 @@ jobs:
 
           - os: macos-latest
             os-name: 🍏
-            node-version: 24.0
 
           - node-version: 24.0
             build-doc: true
