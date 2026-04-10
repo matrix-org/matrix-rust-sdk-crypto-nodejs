@@ -5,9 +5,12 @@ use std::{
     mem::ManuallyDrop,
     ops::Deref,
     sync::Arc,
+    time::Duration,
 };
 
-use matrix_sdk_common::ruma::{serde::Raw, OneTimeKeyAlgorithm, OwnedTransactionId, UInt};
+use matrix_sdk_common::ruma::{
+    events::secret::request::SecretName, serde::Raw, OneTimeKeyAlgorithm, OwnedTransactionId, UInt,
+};
 use matrix_sdk_crypto::{
     backups::MegolmV1BackupKey, types::RoomKeyBackupInfo, DecryptionSettings,
     EncryptionSyncChanges, TrustRequirement,
@@ -19,8 +22,10 @@ use zeroize::Zeroize;
 
 use crate::{
     backup::{BackupDecryptionKey, BackupKeys, RoomKeyCounts},
-    encryption, identifiers, into_err, olm, requests, responses,
-    responses::response_from_string,
+    device::Device,
+    encryption, identifiers, into_err, olm, requests,
+    responses::{self, response_from_string},
+    secret_storage::{SecretStorageItems, SecretStorageKey},
     sync_events,
     types::{self, SignatureVerification},
     vodozemac,
@@ -473,6 +478,9 @@ impl OlmMachine {
     /// Create a new cross signing identity and get the upload request
     /// to push the new public keys to the server.
     ///
+    /// Returns the requests that need to be sent to the server to upload the
+    /// required keys and signatures.
+    ///
     /// Warning: This will delete any existing cross signing keys that
     /// might exist on the server and thus will reset the trust
     /// between all the devices.
@@ -489,9 +497,13 @@ impl OlmMachine {
     ///   the same request multiple times, setting this argument to false
     ///   enables you to reuse the same request.
     #[napi]
-    pub async fn bootstrap_cross_signing(&self, reset: bool) -> napi::Result<()> {
-        self.inner.bootstrap_cross_signing(reset).await.map_err(into_err)?;
-        Ok(())
+    pub async fn bootstrap_cross_signing(
+        &self,
+        reset: bool,
+    ) -> napi::Result<requests::CrossSigningBootstrapRequests> {
+        let bootstrap_requests =
+            self.inner.bootstrap_cross_signing(reset).await.map_err(into_err)?;
+        requests::CrossSigningBootstrapRequests::try_from(bootstrap_requests)
     }
 
     /// Sign the given message using our device key and if available
@@ -657,5 +669,92 @@ impl OlmMachine {
     #[napi(strict)]
     pub fn close(&mut self) {
         self.inner = OlmMachineInner::Closed;
+    }
+
+    /// Export the client's secrets to store in Secret Storage, encrypted using
+    /// the given secret storage key.
+    ///
+    /// Returns the items to store in account data.
+    ///
+    /// Currently only exports the cross-signing keys.
+    #[napi]
+    pub async fn export_secrets_for_secret_storage(
+        &self,
+        secret_storage_key: &SecretStorageKey,
+    ) -> napi::Result<SecretStorageItems> {
+        let bundle = self.inner.store().export_secrets_bundle().await.map_err(into_err)?;
+        let master_key = secret_storage_key
+            .encrypt(bundle.cross_signing.master_key.clone(), &SecretName::CrossSigningMasterKey)?;
+        let user_signing_key = secret_storage_key.encrypt(
+            bundle.cross_signing.user_signing_key.clone(),
+            &SecretName::CrossSigningUserSigningKey,
+        )?;
+        let self_signing_key = secret_storage_key.encrypt(
+            bundle.cross_signing.self_signing_key.clone(),
+            &SecretName::CrossSigningSelfSigningKey,
+        )?;
+        Ok(SecretStorageItems { master_key, user_signing_key, self_signing_key })
+    }
+
+    /// Import secrets from Secret Storage, and sign the device's key with the
+    /// user's self-signing key.
+    ///
+    /// Returns a signature upload request to upload the signature to the
+    /// server.
+    #[napi]
+    pub async fn import_secrets_from_secret_storage(
+        &self,
+        secret_storage_key: &SecretStorageKey,
+        items: &SecretStorageItems,
+    ) -> napi::Result<requests::SignatureUploadRequest> {
+        let master_key =
+            secret_storage_key.decrypt(&items.master_key, &SecretName::CrossSigningMasterKey)?;
+        let self_signing_key = secret_storage_key
+            .decrypt(&items.self_signing_key, &SecretName::CrossSigningSelfSigningKey)?;
+        let user_signing_key = secret_storage_key
+            .decrypt(&items.user_signing_key, &SecretName::CrossSigningUserSigningKey)?;
+        let export = matrix_sdk_crypto::CrossSigningKeyExport {
+            master_key: Some(master_key),
+            self_signing_key: Some(self_signing_key),
+            user_signing_key: Some(user_signing_key),
+        };
+        self.inner.import_cross_signing_keys(export).await.map_err(into_err)?;
+
+        // Check that the keys actually got imported.  Sometimes the import will
+        // fail silently if public keys are missing.
+        let cross_signing_status = self.inner.cross_signing_status().await;
+        if !(cross_signing_status.has_master
+            && cross_signing_status.has_self_signing
+            && cross_signing_status.has_user_signing)
+        {
+            return Err(napi::Error::from_reason("failed to import the keys"));
+        }
+
+        // self-sign, and return the signature request
+        let device = self
+            .inner
+            .get_device(self.inner.user_id(), self.inner.device_id(), None)
+            .await
+            .map_err(into_err)?
+            .ok_or(napi::Error::from_reason("internal error: failed to fetch our own device"))?;
+        let signature_upload_request = device.verify().await.map_err(into_err)?;
+
+        requests::SignatureUploadRequest::try_from(&signature_upload_request).map_err(into_err)
+    }
+
+    /// Get information about a device.
+    #[napi]
+    pub async fn get_device(
+        &self,
+        user_id: &identifiers::UserId,
+        device_id: &identifiers::DeviceId,
+        timeout: Option<f64>,
+    ) -> napi::Result<Option<Device>> {
+        let device = self
+            .inner
+            .get_device(&user_id.inner, &device_id.inner, timeout.map(Duration::from_secs_f64))
+            .await
+            .map_err(into_err)?;
+        Ok(device.map(|device| device.into()))
     }
 }

@@ -20,6 +20,7 @@ use napi_derive::napi;
 
 pub mod attachment;
 pub mod backup;
+pub mod device;
 pub mod encryption;
 mod errors;
 pub mod events;
@@ -28,6 +29,7 @@ pub mod machine;
 pub mod olm;
 pub mod requests;
 pub mod responses;
+pub mod secret_storage;
 pub mod sync_events;
 #[cfg(feature = "tracing")]
 pub mod tracing;
