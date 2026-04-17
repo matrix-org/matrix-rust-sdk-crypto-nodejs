@@ -127,7 +127,7 @@ jobs:
       - name: Upload artifacts to release
         run: |
           gh release upload "$INPUTS_TAG" "*.node" --draft
-        environment:
+        env:
           INPUTS_TAG: ${{ inputs.tag }}
 
   publish-nodejs-package:
