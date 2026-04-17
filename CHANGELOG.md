@@ -2,6 +2,7 @@
 
 ## UNRELEASED
 
+-   Support Node.JS 25, drop support for 22. [#68](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/68)
 -   `OlmMachine.bootstrap_cross_signing` now returns the requests required to
     upload the cross-signing keys to the server. [#67](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/67)
 -   Add new functions `OlmMachine.export_secrets_for_secret_storage` and
@@ -9,7 +10,6 @@
     types, for reading and writing to Secret Storage. [#67](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/67)
 -   Add a new function `OlmMachine.get_device` to get information about a
     device. [#67](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/67)
--   Support Node.JS 25, drop support for 22.
 
 ## v0.4.0 - 2026-01-08
 
