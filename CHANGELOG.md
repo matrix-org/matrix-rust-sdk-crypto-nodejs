@@ -2,7 +2,7 @@
 
 ## UNRELEASED
 
-## v0.4.1 - 2026-04-20
+## v0.5.0 - 2026-04-20
 
 -   Support Node.JS 25, drop support for 22. [#68](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/68)
 -   `OlmMachine.bootstrap_cross_signing` now returns the requests required to
