@@ -52,6 +52,10 @@ jobs:
       - name: run lint
         run: npm run lint
 
+      - name: Check package version consistency
+        run: |
+          diff <(jq .version package.json) <(jq .version package-lock.json)
+
   test:
     name: test ${{ matrix.os-name }}, v${{ matrix.node-version }}
     runs-on: ${{ matrix.os }}
