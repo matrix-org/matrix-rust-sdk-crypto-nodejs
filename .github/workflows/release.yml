@@ -126,7 +126,7 @@ jobs:
           npx napi build --platform --release --strip --target ${{ matrix.target }} ${{ contains(matrix.target, 'musl') && '--zig' || '' }}
       - name: Upload artifacts to release
         run: |
-          gh release upload "$INPUTS_TAG" "*.node" --draft
+          gh release upload "$INPUTS_TAG" "*.node"
         env:
           INPUTS_TAG: ${{ inputs.tag }}
 
@@ -173,7 +173,7 @@ jobs:
           npm pack
       - name: Upload npm package to release
         run: |
-          gh release upload "${INPUTS_TAG}" "*.tgz" --draft
+          gh release upload "${INPUTS_TAG}" "*.tgz"
         env:
           INPUTS_TAG: ${{ inputs.tag }}
       - name: Publish to npmjs.com
