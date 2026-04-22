@@ -52,6 +52,9 @@ jobs:
       - name: run lint
         run: npm run lint
 
+      - name: Check for clean workspace after package installation
+        run: git diff --exit-code
+
   test:
     name: test ${{ matrix.os-name }}, v${{ matrix.node-version }}
     runs-on: ${{ matrix.os }}
