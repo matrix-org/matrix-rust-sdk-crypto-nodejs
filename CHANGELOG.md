@@ -2,6 +2,8 @@
 
 ## UNRELEASED
 
+## v0.5.1 - 2026-04-22
+
 -   Try to fix release script. [#72](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/72)
 
 ## v0.5.0 - 2026-04-20
