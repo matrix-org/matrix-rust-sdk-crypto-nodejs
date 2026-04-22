@@ -52,10 +52,8 @@ jobs:
       - name: run lint
         run: npm run lint
 
-      - name: Check package version consistency
-        run: |
-          diff <(jq .version package.json) <(jq .version package-lock.json)
-          diff <(jq .version package.json) <(jq '.packages[""].version' package-lock.json)
+      - name: Check for clean workspace after package installation
+        run: git diff --exit-code
 
   test:
     name: test ${{ matrix.os-name }}, v${{ matrix.node-version }}
