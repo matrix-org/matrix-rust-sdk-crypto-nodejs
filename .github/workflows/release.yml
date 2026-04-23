@@ -43,6 +43,18 @@ jobs:
     permissions:
       contents: write
     steps:
+      # use the given tag
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        name: "Checking out ${{ inputs.tag }}"
+        if: "${{ inputs.tag }}"
+        with:
+          ref: ${{ inputs.tag }}
+          persist-credentials: false
+      # use the default
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        if: "${{ !inputs.tag }}"
+        with:
+          persist-credentials: false
       - name: Create draft release
         run: gh release create "$INPUTS_TAG" --draft
         env:
