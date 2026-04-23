@@ -39,6 +39,8 @@ on:
 jobs:
   upload-assets:
     name: "Upload prebuilt libraries"
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
