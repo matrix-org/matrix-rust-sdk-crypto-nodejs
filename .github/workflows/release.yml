@@ -130,7 +130,7 @@ jobs:
         run: |
           gh release upload "$INPUTS_TAG" "*.node"
         env:
-          INPUTS_TAG: ${{ inputs.tag }}
+          INPUTS_TAG: ${{ inputs.tag || github.ref_name }}
           GH_TOKEN: ${{ github.token }}
 
   publish-nodejs-package:
@@ -178,7 +178,7 @@ jobs:
         run: |
           gh release upload "${INPUTS_TAG}" "*.tgz"
         env:
-          INPUTS_TAG: ${{ inputs.tag }}
+          INPUTS_TAG: ${{ inputs.tag || github.ref_name }}
           GH_TOKEN: ${{ github.token }}
       - name: Publish to npmjs.com
         run: npm publish --access public --provenance
