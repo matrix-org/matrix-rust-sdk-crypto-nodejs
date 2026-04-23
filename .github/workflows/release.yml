@@ -56,7 +56,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Create draft release
-        run: gh release create "$INPUTS_TAG" --draft
+        run: gh release create "$INPUTS_TAG" --draft --title "$INPUTS_TAG" --generate-notes --verify-tag
         env:
           INPUTS_TAG: ${{ inputs.tag || github.ref_name }}
           GH_TOKEN: ${{ github.token }}
