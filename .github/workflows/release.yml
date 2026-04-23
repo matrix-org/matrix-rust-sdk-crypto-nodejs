@@ -37,8 +37,22 @@ on:
         type: string
 
 jobs:
+  draft-release:
+    name: Create draft release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Create draft release
+        run: gh release create "$INPUTS_TAG" --draft
+        env:
+          INPUTS_TAG: ${{ inputs.tag || github.ref_name }}
+          GH_TOKEN: ${{ github.token }}
+
   upload-assets:
     name: "Upload prebuilt libraries"
+    needs:
+      - draft-release
     permissions:
       contents: write
     strategy:
@@ -128,7 +142,7 @@ jobs:
           npx napi build --platform --release --strip --target ${{ matrix.target }} ${{ contains(matrix.target, 'musl') && '--zig' || '' }}
       - name: Upload artifacts to release
         run: |
-          gh release create "$INPUTS_TAG" "*.node"
+          gh release upload "$INPUTS_TAG" "*.node"
         env:
           INPUTS_TAG: ${{ inputs.tag || github.ref_name }}
           GH_TOKEN: ${{ github.token }}
