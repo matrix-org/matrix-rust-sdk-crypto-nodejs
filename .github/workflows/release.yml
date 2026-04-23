@@ -128,7 +128,7 @@ jobs:
           npx napi build --platform --release --strip --target ${{ matrix.target }} ${{ contains(matrix.target, 'musl') && '--zig' || '' }}
       - name: Upload artifacts to release
         run: |
-          gh release upload "$INPUTS_TAG" "*.node"
+          gh release create "$INPUTS_TAG" "*.node"
         env:
           INPUTS_TAG: ${{ inputs.tag || github.ref_name }}
           GH_TOKEN: ${{ github.token }}
