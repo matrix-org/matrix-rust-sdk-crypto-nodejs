@@ -153,8 +153,16 @@ jobs:
           npm install --ignore-scripts
           npx napi build --platform --release --strip --target ${{ matrix.target }} ${{ contains(matrix.target, 'musl') && '--zig' || '' }}
       - name: Upload artifacts to release
+        if: runner.os != 'Windows'
         run: |
           gh release upload "$INPUTS_TAG" "*.node"
+        env:
+          INPUTS_TAG: ${{ inputs.tag || github.ref_name }}
+          GH_TOKEN: ${{ github.token }}
+      - name: Upload artifacts to release (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          gh release upload "env:$INPUTS_TAG" "*.node"
         env:
           INPUTS_TAG: ${{ inputs.tag || github.ref_name }}
           GH_TOKEN: ${{ github.token }}
