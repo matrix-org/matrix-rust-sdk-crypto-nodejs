@@ -102,7 +102,7 @@ Page](https://nodejs.org/en/about/releases/), _and_ which are
 compatible with [NAPI v6 (Node.js
 API)](https://nodejs.org/api/n-api.html#node-api-version-matrix). It
 means that this binding will work with the following versions:
-24.0.0 and 26.0.0.
+v24 and v26.
 
 Once the Rust compiler, Node.js and npm are installed, you can run the
 following commands:
