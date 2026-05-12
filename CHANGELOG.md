@@ -3,6 +3,7 @@
 ## UNRELEASED
 
 -   Add support for Node.JS 26, and drop support for Node.JS 25. [#76](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/76)
+-   Support Node-API Version 8. [#77](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/77)
 
 ## v0.5.1 - 2026-04-22
 

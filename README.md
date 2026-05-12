@@ -99,8 +99,8 @@ The binding is compatible with, and tested against, the Node.js
 versions that are in “current” or “active” states,
 according to [the Node.js Releases
 Page](https://nodejs.org/en/about/releases/), _and_ which are
-compatible with [NAPI v6 (Node.js
-API)](https://nodejs.org/api/n-api.html#node-api-version-matrix). It
+compatible with [Node-API (formerly N-API)
+v8)](https://nodejs.org/api/n-api.html#node-api-version-matrix). It
 means that this binding will work with the following versions:
 v24 and v26.
 
