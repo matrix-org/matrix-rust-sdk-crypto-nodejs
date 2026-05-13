@@ -163,6 +163,9 @@ impl DecryptedRoomEvent {
     pub fn sender_curve25519_key(&self) -> Option<String> {
         Some(match &self.encryption_info.algorithm_info {
             AlgorithmInfo::MegolmV1AesSha2 { curve25519_key, .. } => curve25519_key.clone(),
+            AlgorithmInfo::OlmV1Curve25519AesSha2 { curve25519_public_key_base64 } => {
+                curve25519_public_key_base64.clone()
+            }
         })
     }
 
@@ -174,6 +177,7 @@ impl DecryptedRoomEvent {
             AlgorithmInfo::MegolmV1AesSha2 { sender_claimed_keys, .. } => {
                 sender_claimed_keys.get(&ruma::DeviceKeyAlgorithm::Ed25519).cloned()
             }
+            AlgorithmInfo::OlmV1Curve25519AesSha2 { .. } => None,
         }
     }
 
@@ -201,6 +205,9 @@ impl DecryptedRoomEvent {
 
 impl From<matrix_sdk_common::deserialized_responses::DecryptedRoomEvent> for DecryptedRoomEvent {
     fn from(value: matrix_sdk_common::deserialized_responses::DecryptedRoomEvent) -> Self {
-        Self { event: value.event.json().to_string(), encryption_info: value.encryption_info }
+        Self {
+            event: value.event.json().to_string(),
+            encryption_info: (*value.encryption_info).clone(),
+        }
     }
 }

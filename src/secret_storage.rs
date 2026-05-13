@@ -2,13 +2,16 @@
 
 use std::collections::{BTreeMap, HashMap};
 
-use matrix_sdk_common::ruma::events::{
-    secret::request::SecretName,
-    secret_storage::{
-        key::SecretStorageKeyEventContent,
-        secret::{SecretEncryptedData, SecretEventContent},
+use matrix_sdk_common::ruma::{
+    events::{
+        secret::request::SecretName,
+        secret_storage::{
+            key::SecretStorageKeyEventContent,
+            secret::{SecretEncryptedData, SecretEventContent},
+        },
+        EventContentFromType,
     },
-    EventContentFromType,
+    serde::Raw,
 };
 use matrix_sdk_crypto::secret_storage;
 use napi_derive::napi;
@@ -91,8 +94,10 @@ impl SecretStorageKey {
     ) -> napi::Result<String> {
         let plaintext_string = plaintext.into_bytes();
         let encrypted_data = self.inner.encrypt(plaintext_string, secret_name);
+        let encrypted_data =
+            Raw::new(&encrypted_data).expect("We should be able to serialize our encrypted data");
         let mut encrypted = BTreeMap::new();
-        encrypted.insert(self.key_id(), SecretEncryptedData::from(encrypted_data));
+        encrypted.insert(self.key_id(), SecretEncryptedData::new(encrypted_data));
         serde_json::to_string(&SecretEventContent::new(encrypted)).map_err(into_err)
     }
 
@@ -123,9 +128,10 @@ impl SecretStorageKey {
             .encrypted
             .remove(self.inner.key_id())
             .ok_or(napi::Error::from_reason(format!("{secret_name} not encrypted with key")))?;
-        let secret_data =
-            secret_storage::AesHmacSha2EncryptedData::try_from(secret_data).map_err(into_err)?;
+
+        let secret_data = secret_data.deserialize_as().map_err(into_err)?;
         let secret = self.inner.decrypt(&secret_data, secret_name).map_err(into_err)?;
+
         String::from_utf8(secret).map_err(into_err)
     }
 
