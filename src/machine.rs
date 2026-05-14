@@ -188,10 +188,15 @@ impl OlmMachine {
         self.inner.identity_keys().into()
     }
 
-    /// Handle a to-device and one-time key counts from a sync response.
+    /// Handle to-device events and one-time key counts from a sync response.
     ///
-    /// This will decrypt and handle to-device events returning the
-    /// decrypted versions of them, as a JSON-encoded string.
+    /// This will decrypt and handle to-device events, returning a two-element
+    /// array where:
+    ///
+    /// * The first element is an array containing the decrypted to-device
+    ///   events as JSON-encoded strings.
+    /// * The second element is an array containing information about room keys
+    ///   received as part of those decrypted to-device events.
     ///
     /// To decrypt an event from the room timeline, please use
     /// `decrypt_room_event`.
@@ -203,6 +208,8 @@ impl OlmMachine {
     ///   response.
     /// * `one_time_keys_count`, the current one-time keys counts that the sync
     ///   response returned.
+    /// * `unused_fallback_keys`, the list of unused fallback keys the
+    ///   homeserver knows about.
     #[napi(strict)]
     pub async fn receive_sync_changes(
         &self,
@@ -225,10 +232,10 @@ impl OlmMachine {
                 .collect::<Vec<_>>(),
         );
 
-        serde_json::to_string(
-            &self
-                .inner
-                .receive_sync_changes(EncryptionSyncChanges {
+        let (to_device_events, room_key_info) = &self
+            .inner
+            .receive_sync_changes(
+                EncryptionSyncChanges {
                     to_device_events: to_device_events_decoded,
                     changed_devices: &changed_devices,
                     one_time_keys_counts: &one_time_key_counts,
@@ -236,11 +243,18 @@ impl OlmMachine {
 
                     // matrix-sdk-crypto does not (currently) use `next_batch_token`.
                     next_batch_token: None,
-                })
-                .await
-                .map_err(into_err)?,
-        )
-        .map_err(into_err)
+                },
+                &DecryptionSettings {
+                    sender_device_trust_requirement: TrustRequirement::Untrusted,
+                },
+            )
+            .await
+            .map_err(into_err)?;
+
+        let to_device_events: Vec<_> =
+            to_device_events.into_iter().map(|event| event.to_raw()).collect();
+
+        serde_json::to_string(&(to_device_events, room_key_info)).map_err(into_err)
     }
 
     /// Get the outgoing requests that need to be sent out.
@@ -429,14 +443,14 @@ impl OlmMachine {
     ) -> napi::Result<String> {
         let room_id = room_id.inner.clone();
         let content = serde_json::from_str(content.as_str()).map_err(into_err)?;
-        serde_json::to_string(
-            &self
-                .inner
-                .encrypt_room_event_raw(&room_id, event_type.as_ref(), &content)
-                .await
-                .map_err(into_err)?,
-        )
-        .map_err(into_err)
+
+        let encrypted = self
+            .inner
+            .encrypt_room_event_raw(&room_id, event_type.as_ref(), &content)
+            .await
+            .map_err(into_err)?;
+
+        serde_json::to_string(&encrypted.content).map_err(into_err)
     }
 
     /// Decrypt an event from a room timeline.

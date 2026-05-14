@@ -161,9 +161,12 @@ impl DecryptedRoomEvent {
     /// decryption key originally.
     #[napi(getter)]
     pub fn sender_curve25519_key(&self) -> Option<String> {
-        Some(match &self.encryption_info.algorithm_info {
-            AlgorithmInfo::MegolmV1AesSha2 { curve25519_key, .. } => curve25519_key.clone(),
-        })
+        match &self.encryption_info.algorithm_info {
+            AlgorithmInfo::MegolmV1AesSha2 { curve25519_key, .. } => Some(curve25519_key.clone()),
+            // This can't happen as the we're not supporting `m.olm.*` for room events, so we're
+            // just returning `None` here.
+            AlgorithmInfo::OlmV1Curve25519AesSha2 { .. } => None,
+        }
     }
 
     /// The signing Ed25519 key that have created the megolm key that
@@ -174,6 +177,9 @@ impl DecryptedRoomEvent {
             AlgorithmInfo::MegolmV1AesSha2 { sender_claimed_keys, .. } => {
                 sender_claimed_keys.get(&ruma::DeviceKeyAlgorithm::Ed25519).cloned()
             }
+            // Same as the Curve25519 key, this can't happen as the we're not supporting `m.olm.*`
+            // for room events, so we're just returning `None` here.
+            AlgorithmInfo::OlmV1Curve25519AesSha2 { .. } => None,
         }
     }
 
@@ -201,6 +207,9 @@ impl DecryptedRoomEvent {
 
 impl From<matrix_sdk_common::deserialized_responses::DecryptedRoomEvent> for DecryptedRoomEvent {
     fn from(value: matrix_sdk_common::deserialized_responses::DecryptedRoomEvent) -> Self {
-        Self { event: value.event.json().to_string(), encryption_info: value.encryption_info }
+        Self {
+            event: value.event.json().to_string(),
+            encryption_info: (*value.encryption_info).clone(),
+        }
     }
 }

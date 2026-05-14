@@ -183,7 +183,7 @@ describe(OlmMachine.name, () => {
 
     describe("setup workflow to mark requests as sent", () => {
         let m;
-        let ougoingRequests;
+        let outgoingRequests;
 
         beforeAll(async () => {
             m = await machine(new UserId("@alice:example.org"), new DeviceId("DEVICEID"));

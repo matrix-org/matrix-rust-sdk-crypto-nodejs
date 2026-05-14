@@ -8,7 +8,7 @@ use matrix_sdk_common::ruma::{
         upload_keys::v3::Request as RumaKeysUploadRequest,
         upload_signatures::v3::Request as RumaSignatureUploadRequest,
     },
-    events::EventContent,
+    events::MessageLikeEventContent,
 };
 use matrix_sdk_crypto::types::requests::{
     AnyOutgoingRequest, KeysBackupRequest as RumaKeysBackupRequest,
@@ -391,7 +391,7 @@ impl TryFrom<OutgoingRequest> for OutgoingRequests {
             }
 
             AnyOutgoingRequest::RoomMessage(request) => {
-                Either6::F(RoomMessageRequest::try_from((request_id, request))?)
+                Either6::F(RoomMessageRequest::try_from((request_id, request.as_ref()))?)
             }
         })
     }

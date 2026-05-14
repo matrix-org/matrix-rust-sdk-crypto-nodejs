@@ -2,6 +2,19 @@
 
 ## UNRELEASED
 
+-   Update matrix-rust-sdk to 0.17.0
+
+    -   Check the user ID in the `sender_device_keys` property of Olm-encrypted
+        to-device events to prevent sender spoofing by homeserver owners.
+        [#6553](https://github.com/matrix-org/matrix-rust-sdk/pull/6553)
+    -   **BREAKING:** The `only_allow_trusted_devices` and
+        `error_on_verified_user_problem` fields of the `EncryptionSettings` have
+        been replaced with the `CollectStrategy` enum.
+    -   **BREAKING:** The `ShieldStateCode::SentInClear` enum variant has been
+        removed.
+    -   **BREAKING:** A new `ShieldStateCode::MismatchedSender` enum variant has been
+        added.
+
 -   Add support for Node.JS 26, and drop support for Node.JS 25. [#76](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/76)
 -   Support Node-API Version 8. [#77](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/77)
 

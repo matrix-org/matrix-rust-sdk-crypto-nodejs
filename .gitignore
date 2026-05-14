@@ -5,3 +5,4 @@
 /docs/*
 /target
 *.tgz
+yarn.lock
