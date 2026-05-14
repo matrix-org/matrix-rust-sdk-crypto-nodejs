@@ -177,6 +177,8 @@ impl DecryptedRoomEvent {
             AlgorithmInfo::MegolmV1AesSha2 { sender_claimed_keys, .. } => {
                 sender_claimed_keys.get(&ruma::DeviceKeyAlgorithm::Ed25519).cloned()
             }
+            // Same as the Curve25519 key, this can't happen as the we're not supporting `m.olm.*`
+            // for room events, so we're just returning `None` here.
             AlgorithmInfo::OlmV1Curve25519AesSha2 { .. } => None,
         }
     }
