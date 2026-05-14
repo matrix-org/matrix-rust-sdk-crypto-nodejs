@@ -188,10 +188,15 @@ impl OlmMachine {
         self.inner.identity_keys().into()
     }
 
-    /// Handle a to-device and one-time key counts from a sync response.
+    /// Handle to-device events and one-time key counts from a sync response.
     ///
-    /// This will decrypt and handle to-device events returning the
-    /// decrypted versions of them, as a JSON-encoded string.
+    /// This will decrypt and handle to-device events, returning a two-element
+    /// array where:
+    ///
+    /// * The first element is an array containing the decrypted to-device
+    ///   events as JSON-encoded strings.
+    /// * The second element is an array containing information about room keys
+    ///   received as part of those decrypted to-device events.
     ///
     /// To decrypt an event from the room timeline, please use
     /// `decrypt_room_event`.
@@ -203,6 +208,8 @@ impl OlmMachine {
     ///   response.
     /// * `one_time_keys_count`, the current one-time keys counts that the sync
     ///   response returned.
+    /// * `unused_fallback_keys`, the list of unused fallback keys the
+    ///   homeserver knows about.
     #[napi(strict)]
     pub async fn receive_sync_changes(
         &self,
