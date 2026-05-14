@@ -161,12 +161,12 @@ impl DecryptedRoomEvent {
     /// decryption key originally.
     #[napi(getter)]
     pub fn sender_curve25519_key(&self) -> Option<String> {
-        Some(match &self.encryption_info.algorithm_info {
-            AlgorithmInfo::MegolmV1AesSha2 { curve25519_key, .. } => curve25519_key.clone(),
-            AlgorithmInfo::OlmV1Curve25519AesSha2 { curve25519_public_key_base64 } => {
-                curve25519_public_key_base64.clone()
-            }
-        })
+        match &self.encryption_info.algorithm_info {
+            AlgorithmInfo::MegolmV1AesSha2 { curve25519_key, .. } => Some(curve25519_key.clone()),
+            // This can't happen as the we're not supporting `m.olm.*` for room events, so we're
+            // just returning `None` here.
+            AlgorithmInfo::OlmV1Curve25519AesSha2 { .. } => None,
+        }
     }
 
     /// The signing Ed25519 key that have created the megolm key that
