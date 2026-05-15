@@ -1,6 +1,6 @@
 # Matrix-Rust-SDK Node.js Bindings
 
-## UNRELEASED
+## v0.6.0 - 2026-05-15
 
 -   Update matrix-rust-sdk to 0.17.0
 
