@@ -31,8 +31,12 @@ When installing, NPM will download the corresponding prebuilt Rust library for y
   <tbody>
     <tr>
       <td rowspan="6">Linux</td>
-      <td rowspan="2"><code>aarch</code></td>
+      <td rowspan="3"><code>aarch</code></td>
       <td><code>aarch64-unknown-linux-gnu</code></td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td><code>aarch64-unknown-linux-musl</code></td>
       <td>✅</td>
     </tr>
     <tr>
