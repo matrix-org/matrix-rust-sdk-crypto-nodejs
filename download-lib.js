@@ -3,7 +3,10 @@ const { DownloaderHelper } = require("node-downloader-helper");
 const { version } = require("./package.json");
 
 // Get the platform and architecture based on environment variables,
-// falling back to the current platform and architecture
+// falling back to the current platform and architecture.
+//
+// The values used here are those supported by Node.js: see https://nodejs.org/api/os.html#osarch and https://nodejs.org/api/os.html#osplatform.
+//
 const platform = process.env.npm_config_target_platform || process.env.npm_config_platform || process.platform;
 const arch = process.env.npm_config_target_arch || process.env.npm_config_arch || process.arch;
 
@@ -105,6 +108,9 @@ switch (platform) {
                 } else {
                     download_lib("matrix-sdk-crypto.linux-x64-gnu.node");
                 }
+                break;
+            case "ia32":
+                download_lib("matrix-sdk-crypto.linux-ia32-gnu.node");
                 break;
             case "arm64":
                 if (isMusl()) {
