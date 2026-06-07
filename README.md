@@ -96,7 +96,7 @@ corporate network or a region with restricted access to GitHub), set the
 `npm install`:
 
 ```sh
-$ export MATRIX_SDK_CRYPTO_DOWNLOADS_BASE_URL="https://your-mirror.example.com/matrix-rust-sdk-crypto-nodejs/releases/download"
+$ export MATRIX_SDK_CRYPTO_DOWNLOADS_BASE_URL="https://npmmirror.com/mirrors/@matrix-org/matrix-sdk-crypto-nodejs"
 $ npm install --save @matrix-org/matrix-sdk-crypto-nodejs
 ```
 
