@@ -4,8 +4,9 @@
 
 -   Update matrix-rust-sdk to 0.17.0
 
-    -   **SECURITY** Check the user ID in the `sender_device_keys` property of Olm-encrypted
-        to-device events to prevent sender spoofing by homeserver owners. ([#6553](https://github.com/matrix-org/matrix-rust-sdk/pull/6553), High, [CVE-2026-45056](https://www.cve.org/CVERecord?id=CVE-2026-45056), [GHSA-wfq4-36m3-9g42](https://github.com/matrix-org/matrix-rust-sdk/security/advisories/GHSA-wfq4-36m3-9g42))
+    -   **SECURITY** (High): Check the user ID in the `sender_device_keys` property of Olm-encrypted to-device events to prevent sender spoofing by homeserver owners.
+        Resolves [CVE-2026-45056](https://www.cve.org/CVERecord?id=CVE-2026-45056) / [GHSA-wfq4-36m3-9g42](https://github.com/matrix-org/matrix-rust-sdk/security/advisories/GHSA-wfq4-36m3-9g42).
+        ([#6553](https://github.com/matrix-org/matrix-rust-sdk/pull/6553))
     -   **BREAKING:** The `only_allow_trusted_devices` and
         `error_on_verified_user_problem` fields of the `EncryptionSettings` have
         been replaced with the `CollectStrategy` enum.
