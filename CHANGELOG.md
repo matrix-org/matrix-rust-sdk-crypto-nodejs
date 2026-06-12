@@ -2,6 +2,8 @@
 
 ## UNRELEASED
 
+-   Update matrix-rust-sdk to `90db5fe3`.
+
 ## v0.6.1 - 2026-06-12
 
 -   Update matrix-rust-sdk to `0.18.0`:
