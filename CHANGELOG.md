@@ -1,5 +1,12 @@
 # Matrix-Rust-SDK Node.js Bindings
 
+## UNRELEASED
+
+-   Update matrix-rust-sdk to `0.18.0`:
+    -   Upgrade Ruma to 0.16.0, fixing a deserialization issue for
+        `m.key.verification.accept` events.
+        ([#6628](https://github.com/matrix-org/matrix-rust-sdk/pulls/6628))
+
 ## v0.6.0 - 2026-05-18
 
 -   Update matrix-rust-sdk to 0.17.0
