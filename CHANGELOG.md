@@ -2,6 +2,7 @@
 
 ## UNRELEASED
 
+-   Update matrix-rust-sdk to `90db5fe3`.
 -   Add prebuilt binary for `linux-riscv64-gnu`. ([#45](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/45))
 
 ## v0.6.1 - 2026-06-12
