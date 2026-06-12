@@ -7,9 +7,10 @@
 -   Update matrix-rust-sdk to `0.18.0`:
     -   Upgrade Ruma to 0.16.0, fixing a deserialization issue for
         `m.key.verification.accept` events.
-        ([#6628](https://github.com/matrix-org/matrix-rust-sdk/pulls/6628)
--   Fix support for x86 on Linux. [#88](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/88)
--   Allow configurable `MATRIX_SDK_CRYPTO_DOWNLOADS_BASE_URL`. [#71](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/71)
+        ([#6628](https://github.com/matrix-org/matrix-rust-sdk/pulls/6628))
+
+-  Fix support for x86 on Linux. [[#88](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/88))
+-  Allow configurable `MATRIX_SDK_CRYPTO_DOWNLOADS_BASE_URL`. ([#71](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/71))
 
 ## v0.6.0 - 2026-05-18
 
