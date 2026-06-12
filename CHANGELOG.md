@@ -2,6 +2,8 @@
 
 ## UNRELEASED
 
+## v0.6.1 - 2026-06-12
+
 -   Update matrix-rust-sdk to `0.18.0`:
     -   Upgrade Ruma to 0.16.0, fixing a deserialization issue for
         `m.key.verification.accept` events.
