@@ -11,6 +11,8 @@ name: Release Crypto-Node.js
 # The usual way to trigger this is by manually triggering the `prep-release`
 # workflow. See its documentation for instructions how to use it.
 
+permissions: {}
+
 env:
   CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: 'aarch64-linux-gnu-gcc'
   CARGO_TARGET_I686_UNKNOWN_LINUX_GNU_LINKER: 'i686-linux-gnu-gcc'
@@ -28,13 +30,44 @@ on:
         description: "The tag to build with"
         required: true
         type: string
-    secrets:
-      NPM_TOKEN:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "The tag to build with"
         required: true
+        type: string
 
 jobs:
+  draft-release:
+    name: Create draft release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      # use the given tag
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        name: "Checking out ${{ inputs.tag }}"
+        if: "${{ inputs.tag }}"
+        with:
+          ref: ${{ inputs.tag }}
+          persist-credentials: false
+      # use the default
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        if: "${{ !inputs.tag }}"
+        with:
+          persist-credentials: false
+      - name: Create draft release
+        run: gh release create "$INPUTS_TAG" --draft --title "$INPUTS_TAG" --generate-notes --verify-tag
+        env:
+          INPUTS_TAG: ${{ inputs.tag || github.ref_name }}
+          GH_TOKEN: ${{ github.token }}
+
   upload-assets:
     name: "Upload prebuilt libraries"
+    needs:
+      - draft-release
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
@@ -42,21 +75,21 @@ jobs:
           # ----------------------------------- Linux
           # Use Ubuntu LTS-1 for broader glibc compatibility.
           - target: x86_64-unknown-linux-gnu
-            os: ubuntu-20.04
+            os: ubuntu-22.04
           - target: i686-unknown-linux-gnu
             apt_install: gcc-i686-linux-gnu g++-i686-linux-gnu
-            os: ubuntu-20.04
+            os: ubuntu-22.04
           - target: aarch64-unknown-linux-gnu
-            os: ubuntu-20.04
+            os: ubuntu-22.04
             apt_install: gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
           - target: arm-unknown-linux-gnueabihf
-            os: ubuntu-20.04
+            os: ubuntu-22.04
             apt_install: gcc-arm-linux-gnueabihf
           - target: x86_64-unknown-linux-musl
-            os: ubuntu-20.04
+            os: ubuntu-22.04
             apt_install: musl-tools
           - target: s390x-unknown-linux-gnu
-            os: ubuntu-20.04
+            os: ubuntu-22.04
             apt_install: gcc-s390x-linux-gnu g++-s390x-linux-gnu
           - target: riscv64gc-unknown-linux-gnu
             os: ubuntu-22.04
@@ -76,22 +109,45 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       # use the given tag
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         name: "Checking out ${{ inputs.tag }}"
         if: "${{ inputs.tag }}"
         with:
           ref: ${{ inputs.tag }}
+          persist-credentials: false
       # use the default
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         if: "${{ !inputs.tag }}"
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@nightly
         with:
-          targets: ${{ matrix.target }}
+          persist-credentials: false
+      - name: Install Rust
+        run: |
+          rustup install nightly
+          rustup default nightly
+          rustup component add rustfmt
+          rustup target add ${{ matrix.target }} --toolchain nightly
       - name: Install Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          cache: ""
+          package-manager-cache: false
+      # Zig is needed on musl targets for reliable linking. In napi V3 this moves from the --zig flag to the --cross-compile flag.
+      # See: https://napi.rs/docs/cross-build
+      # See: https://github.com/napi-rs/callback-example/blob/15855ea37f668df91d24124142895addd33e468f/.github/workflows/CI.yml#L115
+      - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+        if: ${{ contains(matrix.target, 'musl') }}
+        with:
+          version: 0.14.1
+          use-cache: false
+      - name: Install cargo-zigbuild
+        uses: taiki-e/install-action@a37010ded18ff788be4440302bd6830b1ae50d8b # v2.68.25
+        if: ${{ contains(matrix.target, 'musl') }}
+        with:
+          tool: cargo-zigbuild
       - name: Load cache
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+        with:
+          lookup-only: true
       - if: ${{ matrix.apt_install }}
         run: |
           sudo apt-get update
@@ -99,45 +155,68 @@ jobs:
       - name: Build lib
         run: |
           npm install --ignore-scripts
-          npx napi build --platform --release --strip --target ${{ matrix.target }}
+          npx napi build --platform --release --strip --target ${{ matrix.target }} ${{ contains(matrix.target, 'musl') && '--zig' || '' }}
       - name: Upload artifacts to release
-        uses: softprops/action-gh-release@v1
-        with:
-          draft: true
-          files: "*.node"
+        if: runner.os != 'Windows'
+        run: |
+          gh release upload "$INPUTS_TAG" "*.node"
+        env:
+          INPUTS_TAG: ${{ inputs.tag || github.ref_name }}
+          GH_TOKEN: ${{ github.token }}
+      - name: Upload artifacts to release (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          gh release upload "$env:INPUTS_TAG" "*.node"
+        env:
+          INPUTS_TAG: ${{ inputs.tag || github.ref_name }}
+          GH_TOKEN: ${{ github.token }}
 
   publish-nodejs-package:
     name: "Package nodejs package"
     runs-on: ubuntu-latest
     needs:
       - upload-assets
+    permissions:
+      contents: write
+      id-token: write
     steps:
       # use the given tag
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         name: "Checking out ${{ inputs.tag }}"
         if: "${{ inputs.tag }}"
         with:
           ref: ${{ inputs.tag }}
+          persist-credentials: false
       # use the default
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         if: "${{ !inputs.tag }}"
+        with:
+          persist-credentials: false
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@nightly
+        run: |
+          rustup install nightly
+          rustup default nightly
+          rustup component add rustfmt
       - name: Install Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version-file: .node-version
+          registry-url: https://registry.npmjs.org/
+          scope: '@matrix-org'
+          cache: ""
+          package-manager-cache: false
+      - name: Upgrade npm for Trusted Publishing
+        run: npm i -g npm@latest
       - name: Build lib
         run: |
           npm install --ignore-scripts
           npm run release-build
           npm pack
       - name: Upload npm package to release
-        uses: softprops/action-gh-release@v1
-        with:
-          draft: true
-          files: "*.tgz"
+        run: |
+          gh release upload "${INPUTS_TAG}" "*.tgz"
+        env:
+          INPUTS_TAG: ${{ inputs.tag || github.ref_name }}
+          GH_TOKEN: ${{ github.token }}
       - name: Publish to npmjs.com
-        uses: JS-DevTools/npm-publish@v2
-        with:
-          package: package.json
-          access: public
-          token: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public --provenance

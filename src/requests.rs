@@ -8,14 +8,16 @@ use matrix_sdk_common::ruma::{
         upload_keys::v3::Request as RumaKeysUploadRequest,
         upload_signatures::v3::Request as RumaSignatureUploadRequest,
     },
-    events::EventContent,
+    events::MessageLikeEventContent,
 };
-use matrix_sdk_crypto::requests::{
-    KeysBackupRequest as RumaKeysBackupRequest, KeysQueryRequest as RumaKeysQueryRequest,
+use matrix_sdk_crypto::types::requests::{
+    AnyOutgoingRequest, KeysBackupRequest as RumaKeysBackupRequest,
+    KeysQueryRequest as RumaKeysQueryRequest, OutgoingRequest as SdkOutgoingRequest,
     RoomMessageRequest as RumaRoomMessageRequest, ToDeviceRequest as RumaToDeviceRequest,
 };
 use napi::bindgen_prelude::Either6;
 use napi_derive::*;
+use serde_json::json;
 
 use crate::into_err;
 
@@ -26,6 +28,7 @@ use crate::into_err;
 ///
 /// [specification]: https://spec.matrix.org/unstable/client-server-api/#post_matrixclientv3keysupload
 #[napi]
+#[derive(Clone)]
 pub struct KeysUploadRequest {
     /// The request ID.
     #[napi(readonly)]
@@ -153,6 +156,7 @@ impl ToDeviceRequest {
 ///
 /// [specification]: https://spec.matrix.org/unstable/client-server-api/#post_matrixclientv3keyssignaturesupload
 #[napi]
+#[derive(Clone)]
 pub struct SignatureUploadRequest {
     /// The request ID.
     #[napi(readonly)]
@@ -244,7 +248,7 @@ macro_rules! request {
     (
         $destination_request:ident from $source_request:ident
         $( extracts $( $field_name:ident : $field_type:tt ),+ $(,)? )?
-        $( $( and )? groups $( $grouped_field_name:ident $( { $grouped_field_transformation:expr } )? ),+ $(,)? )?
+        $( $( and )? groups $( $grouped_field_name:ident $( { $grouped_field_transformation:expr } )? $( $optional:literal )? ),+ $(,)? )?
     ) => {
         impl TryFrom<&$source_request> for $destination_request {
             type Error = napi::Error;
@@ -254,7 +258,7 @@ macro_rules! request {
                     @__try_from $destination_request from $source_request
                     (request_id = String::new(), request = request)
                     $( extracts [ $( $field_name : $field_type, )+ ] )?
-                    $( groups [ $( $grouped_field_name $( { $grouped_field_transformation } )? , )+ ] )?
+                    $( groups [ $( $grouped_field_name $( { $grouped_field_transformation } )? $( $optional )? , )+ ] )?
                 )
             }
         }
@@ -269,7 +273,7 @@ macro_rules! request {
                     @__try_from $destination_request from $source_request
                     (request_id = request_id.into(), request = request)
                     $( extracts [ $( $field_name : $field_type, )+ ] )?
-                    $( groups [ $( $grouped_field_name $( { $grouped_field_transformation } )? , )+ ] )?
+                    $( groups [ $( $grouped_field_name $( { $grouped_field_transformation } )? $( $optional )? , )+ ] )?
                 )
             }
         }
@@ -279,7 +283,7 @@ macro_rules! request {
         @__try_from $destination_request:ident from $source_request:ident
         (request_id = $request_id:expr, request = $request:expr)
         $( extracts [ $( $field_name:ident : $field_type:tt ),* $(,)? ] )?
-        $( groups [ $( $grouped_field_name:ident $( { $grouped_field_transformation:expr } )? ),* $(,)? ] )?
+        $( groups [ $( $grouped_field_name:ident $( { $grouped_field_transformation:expr } )? $( $optional:literal )? ),* $(,)? ] )?
     ) => {
         {
             Ok($destination_request {
@@ -302,7 +306,7 @@ macro_rules! request {
                                     $grouped_field_transformation
                                 };
                             )?
-                            map.insert(stringify!($grouped_field_name).to_owned(), serde_json::to_value(field).map_err(into_err)?);
+                            request!(@__set_field $( $optional )? map : $grouped_field_name = field);
                         )*
                         let object = serde_json::Value::Object(map);
 
@@ -328,11 +332,21 @@ macro_rules! request {
     ( @__field_type as event_type ; request = $request:expr, field_name = $field_name:ident ) => {
         $request.content.event_type().to_string().into()
     };
+
+    ( @__set_field $optional:literal $map:ident : $grouped_field_name:ident = $field:ident) => {
+        if let Some($field) = $field {
+            request!(@__set_field $map : $grouped_field_name = $field);
+        }
+    };
+
+    ( @__set_field $map:ident : $grouped_field_name:ident = $field:ident) => {
+        $map.insert(stringify!($grouped_field_name).to_owned(), serde_json::to_value($field).map_err(into_err)?);
+    };
 }
 
-request!(KeysUploadRequest from RumaKeysUploadRequest groups device_keys, one_time_keys, fallback_keys);
-request!(KeysQueryRequest from RumaKeysQueryRequest groups timeout { timeout.as_ref().map(Duration::as_millis).map(u64::try_from).transpose().map_err(into_err)? }, device_keys);
-request!(KeysClaimRequest from RumaKeysClaimRequest groups timeout { timeout.as_ref().map(Duration::as_millis).map(u64::try_from).transpose().map_err(into_err)? }, one_time_keys);
+request!(KeysUploadRequest from RumaKeysUploadRequest groups device_keys "optional", one_time_keys, fallback_keys);
+request!(KeysQueryRequest from RumaKeysQueryRequest groups timeout { timeout.as_ref().map(Duration::as_millis).map(u64::try_from).transpose().map_err(into_err)? } "optional", device_keys);
+request!(KeysClaimRequest from RumaKeysClaimRequest groups timeout { timeout.as_ref().map(Duration::as_millis).map(u64::try_from).transpose().map_err(into_err)? } "optional", one_time_keys);
 request!(ToDeviceRequest from RumaToDeviceRequest extracts event_type: string, txn_id: string and groups messages);
 request!(SignatureUploadRequest from RumaSignatureUploadRequest groups signed_keys);
 request!(RoomMessageRequest from RumaRoomMessageRequest extracts room_id: string, txn_id: string, event_type: event_type, content: json);
@@ -347,7 +361,7 @@ pub type OutgoingRequests = Either6<
     RoomMessageRequest,
 >;
 
-pub(crate) struct OutgoingRequest(pub(crate) matrix_sdk_crypto::OutgoingRequest);
+pub(crate) struct OutgoingRequest(pub(crate) SdkOutgoingRequest);
 
 impl TryFrom<OutgoingRequest> for OutgoingRequests {
     type Error = napi::Error;
@@ -356,28 +370,28 @@ impl TryFrom<OutgoingRequest> for OutgoingRequests {
         let request_id = outgoing_request.0.request_id().to_string();
 
         Ok(match outgoing_request.0.request() {
-            matrix_sdk_crypto::OutgoingRequests::KeysUpload(request) => {
+            AnyOutgoingRequest::KeysUpload(request) => {
                 Either6::A(KeysUploadRequest::try_from((request_id, request))?)
             }
 
-            matrix_sdk_crypto::OutgoingRequests::KeysQuery(request) => {
+            AnyOutgoingRequest::KeysQuery(request) => {
                 Either6::B(KeysQueryRequest::try_from((request_id, request))?)
             }
 
-            matrix_sdk_crypto::OutgoingRequests::KeysClaim(request) => {
+            AnyOutgoingRequest::KeysClaim(request) => {
                 Either6::C(KeysClaimRequest::try_from((request_id, request))?)
             }
 
-            matrix_sdk_crypto::OutgoingRequests::ToDeviceRequest(request) => {
+            AnyOutgoingRequest::ToDeviceRequest(request) => {
                 Either6::D(ToDeviceRequest::try_from((request_id, request))?)
             }
 
-            matrix_sdk_crypto::OutgoingRequests::SignatureUpload(request) => {
+            AnyOutgoingRequest::SignatureUpload(request) => {
                 Either6::E(SignatureUploadRequest::try_from((request_id, request))?)
             }
 
-            matrix_sdk_crypto::OutgoingRequests::RoomMessage(request) => {
-                Either6::F(RoomMessageRequest::try_from((request_id, request))?)
+            AnyOutgoingRequest::RoomMessage(request) => {
+                Either6::F(RoomMessageRequest::try_from((request_id, request.as_ref()))?)
             }
         })
     }
@@ -406,4 +420,58 @@ pub enum RequestType {
 
     /// Represents a `KeysBackupRequest`.
     KeysBackup,
+}
+
+#[napi]
+/// The requests needed to upload the cross-signing data to the server
+pub struct CrossSigningBootstrapRequests {
+    /// The request to upload the device's keys.
+    ///
+    /// Could be `None` if the device keys have already been uploaded.
+    #[napi(readonly)]
+    pub upload_keys_req: Option<KeysUploadRequest>,
+
+    /// The request to upload the cross-signing keys, as a JSON-encoded string.
+    ///
+    /// This request does not have a request ID, and `mark_request_as_sent` does
+    /// not need to be called for this request, so only the request body is
+    /// provided.
+    #[napi(readonly)]
+    pub upload_signing_keys_req: String,
+
+    /// The request to upload the cross-signing signatures.
+    #[napi(readonly)]
+    pub upload_signatures_req: SignatureUploadRequest,
+}
+
+impl TryFrom<matrix_sdk_crypto::CrossSigningBootstrapRequests> for CrossSigningBootstrapRequests {
+    type Error = napi::Error;
+    fn try_from(
+        request: matrix_sdk_crypto::CrossSigningBootstrapRequests,
+    ) -> Result<Self, Self::Error> {
+        let upload_keys_req = request
+            .upload_keys_req
+            .map(|upload_keys_req| match upload_keys_req.request() {
+                AnyOutgoingRequest::KeysUpload(request) => {
+                    KeysUploadRequest::try_from((upload_keys_req.request_id().to_string(), request))
+                }
+                _ => Err(napi::Error::from_reason(
+                    "internal error: wrong type of request for upload keys request",
+                )),
+            })
+            .transpose()?;
+        let upload_signing_keys_req = request.upload_signing_keys_req;
+        let upload_signing_keys_map = json!({
+            "master_key": upload_signing_keys_req.master_key,
+            "self_signing_key": upload_signing_keys_req.self_signing_key,
+            "user_signing_key": upload_signing_keys_req.user_signing_key,
+        });
+
+        Ok(Self {
+            upload_keys_req,
+            upload_signing_keys_req: serde_json::to_string(&upload_signing_keys_map)
+                .map_err(into_err)?,
+            upload_signatures_req: (&request.upload_signatures_req).try_into()?,
+        })
+    }
 }

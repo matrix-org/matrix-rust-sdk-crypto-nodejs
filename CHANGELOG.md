@@ -1,9 +1,67 @@
 # Matrix-Rust-SDK Node.js Bindings
 
+## UNRELEASED
+
+## v0.6.1 - 2026-06-12
+
+-   Update matrix-rust-sdk to `0.18.0`:
+    -   Upgrade Ruma to 0.16.0, fixing a deserialization issue for
+        `m.key.verification.accept` events.
+        ([#6628](https://github.com/matrix-org/matrix-rust-sdk/pulls/6628))
+
+-  Fix support for x86 on Linux. [[#88](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/88))
+-  Allow configurable `MATRIX_SDK_CRYPTO_DOWNLOADS_BASE_URL`. ([#71](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/71))
+
+## v0.6.0 - 2026-05-18
+
+-   Update matrix-rust-sdk to 0.17.0
+
+    -   **SECURITY** (High): Check the user ID in the `sender_device_keys` property of Olm-encrypted to-device events to prevent sender spoofing by homeserver owners.
+        Resolves [CVE-2026-45056](https://www.cve.org/CVERecord?id=CVE-2026-45056) / [GHSA-wfq4-36m3-9g42](https://github.com/matrix-org/matrix-rust-sdk/security/advisories/GHSA-wfq4-36m3-9g42).
+        ([#6553](https://github.com/matrix-org/matrix-rust-sdk/pull/6553))
+    -   **BREAKING:** The `only_allow_trusted_devices` and
+        `error_on_verified_user_problem` fields of the `EncryptionSettings` have
+        been replaced with the `CollectStrategy` enum.
+    -   **BREAKING:** The `ShieldStateCode::SentInClear` enum variant has been
+        removed.
+    -   **BREAKING:** A new `ShieldStateCode::MismatchedSender` enum variant has been
+        added.
+
+-   Add support for Node.JS 26, and drop support for Node.JS 25. [#76](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/76)
+-   Support Node-API Version 8. [#77](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/77)
+
+## v0.5.1 - 2026-04-22
+
+-   Try to fix release script. [#72](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/72)
+
+## v0.5.0 - 2026-04-20
+
+-   Support Node.JS 25, drop support for 22. [#68](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/68)
+-   `OlmMachine.bootstrap_cross_signing` now returns the requests required to
+    upload the cross-signing keys to the server. [#67](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/67)
+-   Add new functions `OlmMachine.export_secrets_for_secret_storage` and
+    `OlmMachine.import_secrets_from_secret_storage`, along with associated
+    types, for reading and writing to Secret Storage. [#67](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/67)
+-   Add a new function `OlmMachine.get_device` to get information about a
+    device. [#67](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/67)
+
+## v0.4.0 - 2026-01-08
+
+-   Fix malformed `/keys/upload`, `/keys/query` and `/keys/claim` requests. [#56](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/56)
+
+## v0.4.0-beta.1 - 2025-08-11
+
+-   Update matrix-rust-sdk dependency to 0.9.0.
+-   Support Node.JS 24, drop support for 18, 20.
+-   Support Rust 1.77.
+-   Minimum supported glibc version is now `2.35` (Ubuntu 22.04+ compatible). Support has been dropped for prior versions.
+-   `RoomId` no longer has a `serverName` property, and is allowed to not have a server name component.
+    This is a breaking change.
+
 ## 0.3.0-beta.1 - 2024-11-18
 
-- Update matrix-rust-sdk dependency.
-- The SignedCurve25519 algorithm is no longer supported.
+-   Update matrix-rust-sdk dependency.
+-   The SignedCurve25519 algorithm is no longer supported.
 
 ## 0.2.0-beta.1 - 2024-06-11
 

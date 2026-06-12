@@ -2,13 +2,13 @@
 authors = ["Ivan Enderlin <ivane@element.io>"]
 description = "Matrix encryption library, for NodeJS"
 edition = "2021"
-homepage = "https://github.com/matrix-org/matrix-rust-sdk-nodejs"
+homepage = "https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs"
 keywords = ["matrix", "chat", "messaging", "ruma", "nio"]
 license = "Apache-2.0"
 name = "matrix-sdk-crypto-nodejs"
 readme = "README.md"
-repository = "https://github.com/matrix-org/matrix-rust-sdk-nodejs"
-rust-version = "1.70"
+repository = "https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs"
+rust-version = "1.77"
 version = "0.0.0"
 
 [package.metadata.docs.rs]
@@ -24,10 +24,10 @@ qrcode = ["matrix-sdk-crypto/qrcode"]
 tracing = ["dep:tracing-subscriber"]
 
 [dependencies]
-matrix-sdk-common = { git = "https://github.com/matrix-org/matrix-rust-sdk", rev = "05505a5a48f840be9099cf8548b3fa8ecb6d5283", features = ["js"] }
-matrix-sdk-sqlite = { git = "https://github.com/matrix-org/matrix-rust-sdk", rev = "05505a5a48f840be9099cf8548b3fa8ecb6d5283", features = ["crypto-store"] }
-napi = { version = "2.16.12", default-features = false, features = ["napi6", "tokio_rt"] }
-napi-derive = "2.16.12"
+matrix-sdk-common = { version = "0.18.0", features = ["js"] }
+matrix-sdk-sqlite = { version = "0.18.0", features = ["crypto-store"] }
+napi = { version = "2.16.17", default-features = false, features = ["napi8", "tokio_rt"] }
+napi-derive = "2.16.13"
 ahash = "0.8.11"
 serde_json = "1.0.133"
 http = "1.1.0"
@@ -35,8 +35,7 @@ tracing-subscriber = { version = "0.3.18", default-features = false, features = 
 zeroize = "1.8.1"
 
 [dependencies.matrix-sdk-crypto]
-git = "https://github.com/matrix-org/matrix-rust-sdk"
-rev = "05505a5a48f840be9099cf8548b3fa8ecb6d5283"
+version = "0.18.0"
 default-features = false
 features = ["js", "automatic-room-key-forwarding"]
 

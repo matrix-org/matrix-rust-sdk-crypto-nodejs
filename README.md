@@ -91,6 +91,23 @@ When installing, NPM will download the corresponding prebuilt Rust library for y
   </tbody>
 </table>
 
+### Custom downloads base URL
+
+By default, prebuilt binaries are downloaded from
+`https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/releases/download`.
+If you need to fetch them from a mirror or a private host (for example, in a
+corporate network or a region with restricted access to GitHub), set the
+`MATRIX_SDK_CRYPTO_DOWNLOADS_BASE_URL` environment variable before running
+`npm install`:
+
+```sh
+$ export MATRIX_SDK_CRYPTO_DOWNLOADS_BASE_URL="https://npmmirror.com/mirrors/@matrix-org/matrix-sdk-crypto-nodejs"
+$ npm install --save @matrix-org/matrix-sdk-crypto-nodejs
+```
+
+The downloader appends `/v<version>/<filename>` to this base URL, so the mirror
+must preserve the same directory layout as the GitHub Releases page.
+
 ## Development
 
 This Node.js binding is written in [Rust]. To build this binding, you
@@ -101,13 +118,13 @@ Node.js and npm
 Page](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
 
 The binding is compatible with, and tested against, the Node.js
-versions that are in “current”, “active” or “maintenance” states,
+versions that are in “current” or “active” states,
 according to [the Node.js Releases
 Page](https://nodejs.org/en/about/releases/), _and_ which are
-compatible with [NAPI v6 (Node.js
-API)](https://nodejs.org/api/n-api.html#node-api-version-matrix). It
+compatible with [Node-API (formerly N-API)
+v8)](https://nodejs.org/api/n-api.html#node-api-version-matrix). It
 means that this binding will work with the following versions:
-18.0.0, 20.0.0 and 22.0.0.
+v24 and v26.
 
 Once the Rust compiler, Node.js and npm are installed, you can run the
 following commands:

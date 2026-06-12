@@ -1,0 +1,109 @@
+name: Build against latest matrix-sdk-crypto
+
+# Runs a nightly job that builds this project against the latest version of
+# matrix-sdk-crypto to find out whether some changes there have modified
+# interfaces we are relying on.
+#
+# It does this by effectively doing:
+#
+#     cargo update matrix-sdk-crypto
+#     pnpm build
+#
+# If the build fails, this action:
+#
+# * creates an issue in this project's repo (or updates an existing open issue)
+# * adds a comment to the issue linking to the specific build failure
+# * sends a message to the Crypto team's Matrix room
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Run this task every day at 02:22 UTC
+    - cron:  '22 2 * * *'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  test-against-latest-matrix-sdk-crypto:
+    name: test-against-latest-matrix-sdk-crypto
+    runs-on: ubuntu-latest
+    environment: latest-matrix-sdk-crypto
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install Rust
+        run: |
+          rustup install stable
+          rustup default stable
+
+      - name: Load cache
+        uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Update to the latest matrix-sdk-crypto version
+        run: |
+           cargo xtask unstable-rust-sdk
+
+      # Keep this in sync with .github/workflows/ci.yml
+
+      - name: Install Node.js
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: lts/*
+
+      - name: Install NPM dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run release-build
+
+      - name: Test
+        run: npm run test
+
+      - name: Open an issue on failure
+        if: failure()
+        uses: JasonEtco/create-an-issue@1b14a70e4d8dc185e5cc76d3bec9eab20257b2c5 # v2.9.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO_NAME: "${{ github.event.repository.name }}"
+        with:
+          update_existing: true
+          filename: .github/latest_matrix_sdk_failed_issue_template.md
+        id: create-issue
+
+      - run: 'echo Created/updated ${STEPS_CREATE_ISSUE_OUTPUTS_URL}'
+        if: failure()
+        env:
+          STEPS_CREATE_ISSUE_OUTPUTS_URL: ${{ steps.create-issue.outputs.url }}
+
+      - name: Comment on the issue
+        if: failure()
+        uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3.0.1
+        with:
+          message: |
+            Building ${{ github.event.repository.name }} against the latest matrix-rust-sdk is failing.
+            See https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          pr-number: "${{ steps.create-issue.outputs.number }}"
+
+      - name: Ping matrix room on failure
+        if: failure()
+        uses: fjogeleit/http-request-action@551353b829c3646756b2ec2b3694f819d7957495 # v2.0.0
+        with:
+          url: ${{ secrets.CRYPTO_HOOK_URL }}
+          method: 'POST'
+          customHeaders: '{"Content-Type": "application/json"}'
+          data: '{"text": "${{ github.event.repository.name }} is failing to build against the latest matrix-rust-sdk. See ${{ steps.create-issue.outputs.url }}"}'
