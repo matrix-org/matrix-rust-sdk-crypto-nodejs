@@ -37,7 +37,7 @@ zeroize = "1.8.1"
 [dependencies.matrix-sdk-crypto]
 version = "0.18.0"
 default-features = false
-features = ["js", "automatic-room-key-forwarding"]
+features = ["js"]
 
 [build-dependencies]
 napi-build = "2.1.3"

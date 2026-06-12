@@ -2,6 +2,8 @@
 
 ## UNRELEASED
 
+-   Disable automatic room key forwarding. ([#95](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/95))
+
 ## v0.6.1 - 2026-06-12
 
 -   Update matrix-rust-sdk to `0.18.0`:
