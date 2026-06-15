@@ -109,7 +109,7 @@ This Node.js binding is written in [Rust]. To build this binding, you need to
 install the Rust compiler: see [the Install Rust
 Page](https://www.rust-lang.org/tools/install). Then, the workflow is pretty
 classical by using [pnpm]: see the [Node.js download
-pagee](https://nodejs.org/en/download) and the [pnpm installation
+page](https://nodejs.org/en/download) and the [pnpm installation
 page](https://pnpm.io/installation).
 
 The binding is compatible with, and tested against, the Node.js
