@@ -24,8 +24,8 @@ qrcode = ["matrix-sdk-crypto/qrcode"]
 tracing = ["dep:tracing-subscriber"]
 
 [dependencies]
-matrix-sdk-common = { version = "0.18.0", features = ["js"] }
-matrix-sdk-sqlite = { version = "0.18.0", features = ["crypto-store"] }
+matrix-sdk-common = { features = ["js"] , git = "https://github.com/matrix-org/matrix-rust-sdk" }
+matrix-sdk-sqlite = { features = ["crypto-store"] , git = "https://github.com/matrix-org/matrix-rust-sdk" }
 napi = { version = "2.16.17", default-features = false, features = ["napi8", "tokio_rt"] }
 napi-derive = "2.16.13"
 ahash = "0.8.11"
@@ -35,9 +35,9 @@ tracing-subscriber = { version = "0.3.18", default-features = false, features = 
 zeroize = "1.8.1"
 
 [dependencies.matrix-sdk-crypto]
-version = "0.18.0"
 default-features = false
 features = ["js"]
+git = "https://github.com/matrix-org/matrix-rust-sdk"
 
 [build-dependencies]
 napi-build = "2.1.3"

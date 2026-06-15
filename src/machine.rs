@@ -134,19 +134,17 @@ impl OlmMachine {
                 Some(store_path) => {
                     let machine = match store_type.unwrap_or_default() {
                         StoreType::Sqlite => {
-                            matrix_sdk_crypto::OlmMachine::with_store(
-                                user_id,
-                                device_id,
-                                matrix_sdk_sqlite::SqliteCryptoStore::open(
-                                    store_path,
-                                    store_passphrase.as_deref(),
-                                )
-                                .await
-                                .map(Arc::new)
-                                .map_err(into_err)?,
-                                None,
+                            let store = matrix_sdk_sqlite::SqliteCryptoStore::open(
+                                store_path,
+                                store_passphrase.as_deref(),
                             )
                             .await
+                            .map_err(into_err)?;
+
+                            matrix_sdk_crypto::OlmMachineBuilder::new(user_id, device_id)
+                                .with_crypto_store(Arc::new(store))
+                                .build()
+                                .await
                         }
                     };
 
