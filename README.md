@@ -110,12 +110,12 @@ must preserve the same directory layout as the GitHub Releases page.
 
 ## Development
 
-This Node.js binding is written in [Rust]. To build this binding, you
-need to install the Rust compiler, see [the Install Rust
-Page](https://www.rust-lang.org/tools/install). Then, the workflow is
-pretty classical by using [npm], see [the Downloading and installing
-Node.js and npm
-Page](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
+This Node.js binding is written in [Rust]. To build this binding, you need to
+install the Rust compiler: see [the Install Rust
+Page](https://www.rust-lang.org/tools/install). Then, the workflow is pretty
+classical by using [pnpm]: see the [Node.js download
+page](https://nodejs.org/en/download) and the [pnpm installation
+page](https://pnpm.io/installation).
 
 The binding is compatible with, and tested against, the Node.js
 versions that are in “current” or “active” states,
@@ -130,9 +130,9 @@ Once the Rust compiler, Node.js and npm are installed, you can run the
 following commands:
 
 ```sh
-$ npm install --ignore-scripts
-$ npm run build
-$ npm run test
+$ pnpm install --ignore-scripts
+$ pnpm build
+$ pnpm test
 ```
 
 An `index.js`, `index.d.ts` and a `*.node` files should be
@@ -198,13 +198,13 @@ logs, you should re-compile the extension with the `tracing` feature
 turned on:
 
 ```sh
-$ npm run build -- --features tracing
+$ pnpm build -- --features tracing
 ```
 
 Now, you can use the `MATRIX_LOG` environment variable to tweak the log filtering, such as:
 
 ```sh
-$ MATRIX_LOG=debug npm run test
+$ MATRIX_LOG=debug pnpm test
 ```
 
 See
@@ -234,7 +234,7 @@ To generate the documentation locally, please run the following
 command:
 
 ```sh
-$ npm run doc
+$ pnpm doc
 ```
 
 The documentation is generated in the `./docs` directory.
@@ -244,4 +244,4 @@ The documentation is generated in the `./docs` directory.
 [`matrix-rust-sdk`]: https://github.com/matrix-org/matrix-rust-sdk
 [Matrix]: https://matrix.org/
 [Rust]: https://www.rust-lang.org/
-[npm]: https://www.npmjs.com/
+[pnpm]: https:/pnpm.io/
