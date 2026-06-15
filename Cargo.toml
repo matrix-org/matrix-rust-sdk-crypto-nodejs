@@ -36,7 +36,7 @@ zeroize = "1.8.1"
 
 [dependencies.matrix-sdk-crypto]
 default-features = false
-features = ["js", "automatic-room-key-forwarding"]
+features = ["js"]
 git = "https://github.com/matrix-org/matrix-rust-sdk"
 
 [build-dependencies]
