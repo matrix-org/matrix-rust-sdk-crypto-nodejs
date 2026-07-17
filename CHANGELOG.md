@@ -5,6 +5,7 @@
 -   Update matrix-rust-sdk to `90db5fe3`.
 -   Disable automatic room key forwarding. ([#95](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/95))
 -   Add prebuilt binary for `linux-riscv64-gnu`. ([#45](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/45))
+-   Add method `OlmMachine.queryKeysForUsers` to build an out-of-band key request. ([#96](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/96))
 
 ## v0.6.1 - 2026-06-12
 
