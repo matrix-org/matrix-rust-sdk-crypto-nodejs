@@ -198,7 +198,7 @@ logs, you should re-compile the extension with the `tracing` feature
 turned on:
 
 ```sh
-$ pnpm build -- --features tracing
+$ pnpm build --features tracing
 ```
 
 Now, you can use the `MATRIX_LOG` environment variable to tweak the log filtering, such as:
