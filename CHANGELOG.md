@@ -2,6 +2,7 @@
 
 ## UNRELEASED
 
+-   Correct the README's instructions for how to build with tracing enabled. ([#97](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/97))
 -   Add method `OlmMachine.queryKeysForUsers` to build an out-of-band key request. ([#96](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/96))
 -   Update matrix-rust-sdk to `90db5fe3`.
 -   Disable automatic room key forwarding. ([#95](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/95))
