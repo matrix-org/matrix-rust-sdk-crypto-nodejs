@@ -423,6 +423,30 @@ impl OlmMachine {
             .collect()
     }
 
+    /// Generate an "out-of-band" key query request for the given set of users.
+    ///
+    /// This can be useful if we need the results from `getIdentity` or
+    /// `getUserDevices` to be as up-to-date as possible.
+    ///
+    /// Returns a `KeysQueryRequest` object. The response of the request should
+    /// be passed to the `OlmMachine` with the `mark_request_as_sent`.
+    ///
+    /// # Arguments
+    ///
+    /// * `users`, the list of users to generate key query requests for.
+    #[napi(strict)]
+    pub fn query_keys_for_users(
+        &self,
+        users: Vec<&identifiers::UserId>,
+    ) -> napi::Result<requests::KeysQueryRequest> {
+        let users = users.into_iter().map(|user| user.inner.clone()).collect::<Vec<_>>();
+
+        let (request_id, request) =
+            self.inner.query_keys_for_users(users.iter().map(AsRef::as_ref));
+
+        Ok(requests::KeysQueryRequest::try_from((request_id.to_string(), &request))?)
+    }
+
     /// Encrypt a JSON-encoded content for the given room.
     ///
     /// # Arguments

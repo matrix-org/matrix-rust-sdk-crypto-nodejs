@@ -433,6 +433,23 @@ describe(OlmMachine.name, () => {
         expect(await m.updateTrackedUsers([user])).toStrictEqual(undefined);
     });
 
+    describe("queryKeysForUsers", () => {
+        test("can build a key query request", async () => {
+            const m = await machine();
+            const request = m.queryKeysForUsers([user]);
+            expect(request).toBeInstanceOf(KeysQueryRequest);
+            const body = JSON.parse(request.body);
+            expect(Object.keys(body.device_keys)).toContain(user.toString());
+        });
+
+        test("cannot use an invalid user ID", async () => {
+            const m = await machine();
+            expect(() => {
+                m.queryKeysForUsers([user.localpart]);
+            }).toThrow();
+        });
+    });
+
     test("can read cross-signing status", async () => {
         const m = await machine();
         const crossSigningStatus = await m.crossSigningStatus();
