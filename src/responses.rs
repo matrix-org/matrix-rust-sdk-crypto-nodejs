@@ -12,7 +12,7 @@ use matrix_sdk_common::{
     deserialized_responses::{AlgorithmInfo, EncryptionInfo},
     ruma::{self, api::IncomingResponse as RumaIncomingResponse},
 };
-use matrix_sdk_crypto::IncomingResponse;
+use matrix_sdk_crypto::types::requests::AnyIncomingResponse;
 use napi_derive::*;
 
 use crate::{encryption, identifiers, into_err, requests::RequestType};
@@ -114,16 +114,18 @@ impl TryFrom<(RequestType, http::Response<Vec<u8>>)> for OwnedResponse {
     }
 }
 
-impl<'a> From<&'a OwnedResponse> for IncomingResponse<'a> {
+impl<'a> From<&'a OwnedResponse> for AnyIncomingResponse<'a> {
     fn from(response: &'a OwnedResponse) -> Self {
         match response {
-            OwnedResponse::KeysUpload(response) => IncomingResponse::KeysUpload(response),
-            OwnedResponse::KeysQuery(response) => IncomingResponse::KeysQuery(response),
-            OwnedResponse::KeysClaim(response) => IncomingResponse::KeysClaim(response),
-            OwnedResponse::ToDevice(response) => IncomingResponse::ToDevice(response),
-            OwnedResponse::SignatureUpload(response) => IncomingResponse::SignatureUpload(response),
-            OwnedResponse::RoomMessage(response) => IncomingResponse::RoomMessage(response),
-            OwnedResponse::KeysBackup(response) => IncomingResponse::KeysBackup(response),
+            OwnedResponse::KeysUpload(response) => AnyIncomingResponse::KeysUpload(response),
+            OwnedResponse::KeysQuery(response) => AnyIncomingResponse::KeysQuery(response),
+            OwnedResponse::KeysClaim(response) => AnyIncomingResponse::KeysClaim(response),
+            OwnedResponse::ToDevice(response) => AnyIncomingResponse::ToDevice(response),
+            OwnedResponse::SignatureUpload(response) => {
+                AnyIncomingResponse::SignatureUpload(response)
+            }
+            OwnedResponse::RoomMessage(response) => AnyIncomingResponse::RoomMessage(response),
+            OwnedResponse::KeysBackup(response) => AnyIncomingResponse::KeysBackup(response),
         }
     }
 }
@@ -135,7 +137,7 @@ pub struct DecryptedRoomEvent {
     #[napi(readonly)]
     pub event: String,
 
-    encryption_info: Option<EncryptionInfo>,
+    encryption_info: EncryptionInfo,
 }
 
 #[napi]
@@ -144,7 +146,7 @@ impl DecryptedRoomEvent {
     /// unless the `verification_state` is as well trusted.
     #[napi(getter)]
     pub fn sender(&self) -> Option<identifiers::UserId> {
-        Some(identifiers::UserId::from(self.encryption_info.as_ref()?.sender.clone()))
+        Some(identifiers::UserId::from(self.encryption_info.sender.clone()))
     }
 
     /// The device ID of the device that sent us the event, note this
@@ -152,26 +154,32 @@ impl DecryptedRoomEvent {
     /// trusted.
     #[napi(getter)]
     pub fn sender_device(&self) -> Option<identifiers::DeviceId> {
-        Some(self.encryption_info.as_ref()?.sender_device.as_ref()?.clone().into())
+        Some(self.encryption_info.sender_device.as_ref()?.clone().into())
     }
 
     /// The Curve25519 key of the device that created the megolm
     /// decryption key originally.
     #[napi(getter)]
     pub fn sender_curve25519_key(&self) -> Option<String> {
-        Some(match &self.encryption_info.as_ref()?.algorithm_info {
-            AlgorithmInfo::MegolmV1AesSha2 { curve25519_key, .. } => curve25519_key.clone(),
-        })
+        match &self.encryption_info.algorithm_info {
+            AlgorithmInfo::MegolmV1AesSha2 { curve25519_key, .. } => Some(curve25519_key.clone()),
+            // This can't happen as the we're not supporting `m.olm.*` for room events, so we're
+            // just returning `None` here.
+            AlgorithmInfo::OlmV1Curve25519AesSha2 { .. } => None,
+        }
     }
 
     /// The signing Ed25519 key that have created the megolm key that
     /// was used to decrypt this session.
     #[napi(getter)]
     pub fn sender_claimed_ed25519_key(&self) -> Option<String> {
-        match &self.encryption_info.as_ref()?.algorithm_info {
+        match &self.encryption_info.algorithm_info {
             AlgorithmInfo::MegolmV1AesSha2 { sender_claimed_keys, .. } => {
                 sender_claimed_keys.get(&ruma::DeviceKeyAlgorithm::Ed25519).cloned()
             }
+            // Same as the Curve25519 key, this can't happen as the we're not supporting `m.olm.*`
+            // for room events, so we're just returning `None` here.
+            AlgorithmInfo::OlmV1Curve25519AesSha2 { .. } => None,
         }
     }
 
@@ -188,7 +196,7 @@ impl DecryptedRoomEvent {
     /// verified or deleted.
     #[napi]
     pub fn shield_state(&self, strict: bool) -> Option<encryption::ShieldState> {
-        let state = &self.encryption_info.as_ref()?.verification_state;
+        let state = &self.encryption_info.verification_state;
         if strict {
             Some(state.to_shield_state_strict().into())
         } else {
@@ -197,8 +205,11 @@ impl DecryptedRoomEvent {
     }
 }
 
-impl From<matrix_sdk_common::deserialized_responses::TimelineEvent> for DecryptedRoomEvent {
-    fn from(value: matrix_sdk_common::deserialized_responses::TimelineEvent) -> Self {
-        Self { event: value.event.json().get().to_owned(), encryption_info: value.encryption_info }
+impl From<matrix_sdk_common::deserialized_responses::DecryptedRoomEvent> for DecryptedRoomEvent {
+    fn from(value: matrix_sdk_common::deserialized_responses::DecryptedRoomEvent) -> Self {
+        Self {
+            event: value.event.json().to_string(),
+            encryption_info: (*value.encryption_info).clone(),
+        }
     }
 }

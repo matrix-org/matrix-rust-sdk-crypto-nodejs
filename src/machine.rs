@@ -5,21 +5,27 @@ use std::{
     mem::ManuallyDrop,
     ops::Deref,
     sync::Arc,
+    time::Duration,
 };
 
-use matrix_sdk_common::ruma::{serde::Raw, DeviceKeyAlgorithm, OwnedTransactionId, UInt};
-use matrix_sdk_crypto::{
-    backups::MegolmV1BackupKey, types::RoomKeyBackupInfo, EncryptionSyncChanges,
+use matrix_sdk_common::ruma::{
+    events::secret::request::SecretName, serde::Raw, OneTimeKeyAlgorithm, OwnedTransactionId, UInt,
 };
-use napi::bindgen_prelude::{within_runtime_if_available, Either6, FromNapiValue, ToNapiValue};
+use matrix_sdk_crypto::{
+    backups::MegolmV1BackupKey, types::RoomKeyBackupInfo, DecryptionSettings,
+    EncryptionSyncChanges, TrustRequirement,
+};
+use napi::bindgen_prelude::{within_runtime_if_available, Either6};
 use napi_derive::*;
 use serde_json::value::RawValue;
 use zeroize::Zeroize;
 
 use crate::{
     backup::{BackupDecryptionKey, BackupKeys, RoomKeyCounts},
-    encryption, identifiers, into_err, olm, requests, responses,
-    responses::response_from_string,
+    device::Device,
+    encryption, identifiers, into_err, olm, requests,
+    responses::{self, response_from_string},
+    secret_storage::{SecretStorageItems, SecretStorageKey},
     sync_events,
     types::{self, SignatureVerification},
     vodozemac,
@@ -128,19 +134,17 @@ impl OlmMachine {
                 Some(store_path) => {
                     let machine = match store_type.unwrap_or_default() {
                         StoreType::Sqlite => {
-                            matrix_sdk_crypto::OlmMachine::with_store(
-                                user_id,
-                                device_id,
-                                matrix_sdk_sqlite::SqliteCryptoStore::open(
-                                    store_path,
-                                    store_passphrase.as_deref(),
-                                )
-                                .await
-                                .map(Arc::new)
-                                .map_err(into_err)?,
-                                None,
+                            let store = matrix_sdk_sqlite::SqliteCryptoStore::open(
+                                store_path,
+                                store_passphrase.as_deref(),
                             )
                             .await
+                            .map_err(into_err)?;
+
+                            matrix_sdk_crypto::OlmMachineBuilder::new(user_id, device_id)
+                                .with_crypto_store(Arc::new(store))
+                                .build()
+                                .await
                         }
                     };
 
@@ -182,10 +186,15 @@ impl OlmMachine {
         self.inner.identity_keys().into()
     }
 
-    /// Handle a to-device and one-time key counts from a sync response.
+    /// Handle to-device events and one-time key counts from a sync response.
     ///
-    /// This will decrypt and handle to-device events returning the
-    /// decrypted versions of them, as a JSON-encoded string.
+    /// This will decrypt and handle to-device events, returning a two-element
+    /// array where:
+    ///
+    /// * The first element is an array containing the decrypted to-device
+    ///   events as JSON-encoded strings.
+    /// * The second element is an array containing information about room keys
+    ///   received as part of those decrypted to-device events.
     ///
     /// To decrypt an event from the room timeline, please use
     /// `decrypt_room_event`.
@@ -197,6 +206,8 @@ impl OlmMachine {
     ///   response.
     /// * `one_time_keys_count`, the current one-time keys counts that the sync
     ///   response returned.
+    /// * `unused_fallback_keys`, the list of unused fallback keys the
+    ///   homeserver knows about.
     #[napi(strict)]
     pub async fn receive_sync_changes(
         &self,
@@ -210,19 +221,19 @@ impl OlmMachine {
         let changed_devices = changed_devices.inner.clone();
         let one_time_key_counts = one_time_key_counts
             .iter()
-            .map(|(key, value)| (DeviceKeyAlgorithm::from(key.as_str()), UInt::from(*value)))
+            .map(|(key, value)| (OneTimeKeyAlgorithm::from(key.as_str()), UInt::from(*value)))
             .collect::<BTreeMap<_, _>>();
         let unused_fallback_keys = Some(
             unused_fallback_keys
                 .into_iter()
-                .map(|key| DeviceKeyAlgorithm::from(key.as_str()))
+                .map(|key| OneTimeKeyAlgorithm::from(key.as_str()))
                 .collect::<Vec<_>>(),
         );
 
-        serde_json::to_string(
-            &self
-                .inner
-                .receive_sync_changes(EncryptionSyncChanges {
+        let (to_device_events, room_key_info) = &self
+            .inner
+            .receive_sync_changes(
+                EncryptionSyncChanges {
                     to_device_events: to_device_events_decoded,
                     changed_devices: &changed_devices,
                     one_time_keys_counts: &one_time_key_counts,
@@ -230,11 +241,18 @@ impl OlmMachine {
 
                     // matrix-sdk-crypto does not (currently) use `next_batch_token`.
                     next_batch_token: None,
-                })
-                .await
-                .map_err(into_err)?,
-        )
-        .map_err(into_err)
+                },
+                &DecryptionSettings {
+                    sender_device_trust_requirement: TrustRequirement::Untrusted,
+                },
+            )
+            .await
+            .map_err(into_err)?;
+
+        let to_device_events: Vec<_> =
+            to_device_events.into_iter().map(|event| event.to_raw()).collect();
+
+        serde_json::to_string(&(to_device_events, room_key_info)).map_err(into_err)
     }
 
     /// Get the outgoing requests that need to be sent out.
@@ -405,6 +423,30 @@ impl OlmMachine {
             .collect()
     }
 
+    /// Generate an "out-of-band" key query request for the given set of users.
+    ///
+    /// This can be useful if we need the results from `getIdentity` or
+    /// `getUserDevices` to be as up-to-date as possible.
+    ///
+    /// Returns a `KeysQueryRequest` object. The response of the request should
+    /// be passed to the `OlmMachine` with the `mark_request_as_sent`.
+    ///
+    /// # Arguments
+    ///
+    /// * `users`, the list of users to generate key query requests for.
+    #[napi(strict)]
+    pub fn query_keys_for_users(
+        &self,
+        users: Vec<&identifiers::UserId>,
+    ) -> napi::Result<requests::KeysQueryRequest> {
+        let users = users.into_iter().map(|user| user.inner.clone()).collect::<Vec<_>>();
+
+        let (request_id, request) =
+            self.inner.query_keys_for_users(users.iter().map(AsRef::as_ref));
+
+        Ok(requests::KeysQueryRequest::try_from((request_id.to_string(), &request))?)
+    }
+
     /// Encrypt a JSON-encoded content for the given room.
     ///
     /// # Arguments
@@ -423,14 +465,14 @@ impl OlmMachine {
     ) -> napi::Result<String> {
         let room_id = room_id.inner.clone();
         let content = serde_json::from_str(content.as_str()).map_err(into_err)?;
-        serde_json::to_string(
-            &self
-                .inner
-                .encrypt_room_event_raw(&room_id, event_type.as_ref(), &content)
-                .await
-                .map_err(into_err)?,
-        )
-        .map_err(into_err)
+
+        let encrypted = self
+            .inner
+            .encrypt_room_event_raw(&room_id, event_type.as_ref(), &content)
+            .await
+            .map_err(into_err)?;
+
+        serde_json::to_string(&encrypted.content).map_err(into_err)
     }
 
     /// Decrypt an event from a room timeline.
@@ -448,7 +490,14 @@ impl OlmMachine {
         let event = Raw::from_json(RawValue::from_string(event).map_err(into_err)?);
         let room_id = room_id.inner.clone();
 
-        let room_event = self.inner.decrypt_room_event(&event, &room_id).await.map_err(into_err)?;
+        let decryption_settings =
+            DecryptionSettings { sender_device_trust_requirement: TrustRequirement::Untrusted };
+
+        let room_event = self
+            .inner
+            .decrypt_room_event(&event, &room_id, &decryption_settings)
+            .await
+            .map_err(into_err)?;
 
         Ok(room_event.into())
     }
@@ -464,6 +513,9 @@ impl OlmMachine {
 
     /// Create a new cross signing identity and get the upload request
     /// to push the new public keys to the server.
+    ///
+    /// Returns the requests that need to be sent to the server to upload the
+    /// required keys and signatures.
     ///
     /// Warning: This will delete any existing cross signing keys that
     /// might exist on the server and thus will reset the trust
@@ -481,9 +533,13 @@ impl OlmMachine {
     ///   the same request multiple times, setting this argument to false
     ///   enables you to reuse the same request.
     #[napi]
-    pub async fn bootstrap_cross_signing(&self, reset: bool) -> napi::Result<()> {
-        self.inner.bootstrap_cross_signing(reset).await.map_err(into_err)?;
-        Ok(())
+    pub async fn bootstrap_cross_signing(
+        &self,
+        reset: bool,
+    ) -> napi::Result<requests::CrossSigningBootstrapRequests> {
+        let bootstrap_requests =
+            self.inner.bootstrap_cross_signing(reset).await.map_err(into_err)?;
+        requests::CrossSigningBootstrapRequests::try_from(bootstrap_requests)
     }
 
     /// Sign the given message using our device key and if available
@@ -649,5 +705,92 @@ impl OlmMachine {
     #[napi(strict)]
     pub fn close(&mut self) {
         self.inner = OlmMachineInner::Closed;
+    }
+
+    /// Export the client's secrets to store in Secret Storage, encrypted using
+    /// the given secret storage key.
+    ///
+    /// Returns the items to store in account data.
+    ///
+    /// Currently only exports the cross-signing keys.
+    #[napi]
+    pub async fn export_secrets_for_secret_storage(
+        &self,
+        secret_storage_key: &SecretStorageKey,
+    ) -> napi::Result<SecretStorageItems> {
+        let bundle = self.inner.store().export_secrets_bundle().await.map_err(into_err)?;
+        let master_key = secret_storage_key
+            .encrypt(bundle.cross_signing.master_key.clone(), &SecretName::CrossSigningMasterKey)?;
+        let user_signing_key = secret_storage_key.encrypt(
+            bundle.cross_signing.user_signing_key.clone(),
+            &SecretName::CrossSigningUserSigningKey,
+        )?;
+        let self_signing_key = secret_storage_key.encrypt(
+            bundle.cross_signing.self_signing_key.clone(),
+            &SecretName::CrossSigningSelfSigningKey,
+        )?;
+        Ok(SecretStorageItems { master_key, user_signing_key, self_signing_key })
+    }
+
+    /// Import secrets from Secret Storage, and sign the device's key with the
+    /// user's self-signing key.
+    ///
+    /// Returns a signature upload request to upload the signature to the
+    /// server.
+    #[napi]
+    pub async fn import_secrets_from_secret_storage(
+        &self,
+        secret_storage_key: &SecretStorageKey,
+        items: &SecretStorageItems,
+    ) -> napi::Result<requests::SignatureUploadRequest> {
+        let master_key =
+            secret_storage_key.decrypt(&items.master_key, &SecretName::CrossSigningMasterKey)?;
+        let self_signing_key = secret_storage_key
+            .decrypt(&items.self_signing_key, &SecretName::CrossSigningSelfSigningKey)?;
+        let user_signing_key = secret_storage_key
+            .decrypt(&items.user_signing_key, &SecretName::CrossSigningUserSigningKey)?;
+        let export = matrix_sdk_crypto::CrossSigningKeyExport {
+            master_key: Some(master_key),
+            self_signing_key: Some(self_signing_key),
+            user_signing_key: Some(user_signing_key),
+        };
+        self.inner.import_cross_signing_keys(export).await.map_err(into_err)?;
+
+        // Check that the keys actually got imported.  Sometimes the import will
+        // fail silently if public keys are missing.
+        let cross_signing_status = self.inner.cross_signing_status().await;
+        if !(cross_signing_status.has_master
+            && cross_signing_status.has_self_signing
+            && cross_signing_status.has_user_signing)
+        {
+            return Err(napi::Error::from_reason("failed to import the keys"));
+        }
+
+        // self-sign, and return the signature request
+        let device = self
+            .inner
+            .get_device(self.inner.user_id(), self.inner.device_id(), None)
+            .await
+            .map_err(into_err)?
+            .ok_or(napi::Error::from_reason("internal error: failed to fetch our own device"))?;
+        let signature_upload_request = device.verify().await.map_err(into_err)?;
+
+        requests::SignatureUploadRequest::try_from(&signature_upload_request).map_err(into_err)
+    }
+
+    /// Get information about a device.
+    #[napi]
+    pub async fn get_device(
+        &self,
+        user_id: &identifiers::UserId,
+        device_id: &identifiers::DeviceId,
+        timeout: Option<f64>,
+    ) -> napi::Result<Option<Device>> {
+        let device = self
+            .inner
+            .get_device(&user_id.inner, &device_id.inner, timeout.map(Duration::from_secs_f64))
+            .await
+            .map_err(into_err)?;
+        Ok(device.map(|device| device.into()))
     }
 }

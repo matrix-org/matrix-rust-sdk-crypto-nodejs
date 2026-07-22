@@ -1,4 +1,6 @@
 /.github
 /docs
 /pkg
+/pnpm-lock.yaml
 /target
+/xtask/target

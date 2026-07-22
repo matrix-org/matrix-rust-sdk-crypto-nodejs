@@ -59,15 +59,6 @@ describe(DeviceKeyId.name, () => {
             algorithm: "curve25519",
             deviceId: "foobar",
         },
-
-        {
-            name: "signed curve25519",
-            id: "signed_curve25519:foobar",
-            algorithmName: DeviceKeyAlgorithmName.SignedCurve25519,
-            algorithm: "signed_curve25519",
-            deviceId: "foobar",
-        },
-
         {
             name: "unknown",
             id: "hello:foobar",
@@ -91,26 +82,19 @@ describe("DeviceKeyAlgorithmName", () => {
     test("has the correct variants", () => {
         expect(DeviceKeyAlgorithmName.Ed25519).toStrictEqual(0);
         expect(DeviceKeyAlgorithmName.Curve25519).toStrictEqual(1);
-        expect(DeviceKeyAlgorithmName.SignedCurve25519).toStrictEqual(2);
-        expect(DeviceKeyAlgorithmName.Unknown).toStrictEqual(3);
+        expect(DeviceKeyAlgorithmName.Unknown).toStrictEqual(2);
     });
 });
 
 describe(RoomId.name, () => {
-    test("cannot be invalid", () => {
-        expect(() => {
-            new RoomId("!foo");
-        }).toThrow();
-    });
-
-    const room = new RoomId("!foo:bar.org");
-
-    test("server name is present", () => {
-        expect(room.serverName).toBeInstanceOf(ServerName);
-    });
-
     test("can read the room ID as string", () => {
+        const room = new RoomId("!foo:bar.org");
         expect(room.toString()).toStrictEqual("!foo:bar.org");
+    });
+
+    test("can read a room v12 ID as string", () => {
+        const roomV12 = new RoomId("!foo");
+        expect(roomV12.toString()).toStrictEqual("!foo");
     });
 });
 

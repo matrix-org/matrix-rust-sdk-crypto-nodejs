@@ -2,7 +2,6 @@
 //! events, keys, rooms, servers, users and URIs.
 
 use matrix_sdk_common::ruma;
-use napi::bindgen_prelude::{FromNapiValue, ToNapiValue};
 use napi_derive::*;
 
 use crate::into_err;
@@ -124,7 +123,7 @@ impl DeviceKeyId {
     /// Returns device ID of the device key ID.
     #[napi(getter)]
     pub fn device_id(&self) -> DeviceId {
-        self.inner.device_id().to_owned().into()
+        return DeviceId::new(self.inner.key_name().to_string());
     }
 
     /// Return the device key ID as a string.
@@ -174,10 +173,6 @@ pub enum DeviceKeyAlgorithmName {
     /// The Curve25519 ECDH algorithm.
     Curve25519,
 
-    /// The Curve25519 ECDH algorithm, but the key also contains
-    /// signatures.
-    SignedCurve25519,
-
     /// An unknown device key algorithm.
     Unknown,
 }
@@ -189,7 +184,6 @@ impl From<ruma::DeviceKeyAlgorithm> for DeviceKeyAlgorithmName {
         match value {
             Ed25519 => Self::Ed25519,
             Curve25519 => Self::Curve25519,
-            SignedCurve25519 => Self::SignedCurve25519,
             _ => Self::Unknown,
         }
     }
@@ -216,12 +210,7 @@ impl RoomId {
     #[napi(constructor, strict)]
     pub fn new(id: String) -> napi::Result<Self> {
         let room_id = ruma::RoomId::parse(id).map_err(into_err)?;
-        match room_id.server_name() {
-            Some(_) => Ok(Self::from(room_id)),
-            None => Err(napi::Error::from_reason(
-                "Room ID does not have a valid server_name".to_owned(),
-            )),
-        }
+        Ok(Self::from(room_id))
     }
 
     /// Return the room ID as a string.
@@ -229,12 +218,6 @@ impl RoomId {
     #[allow(clippy::inherent_to_string)]
     pub fn to_string(&self) -> String {
         self.inner.as_str().to_owned()
-    }
-
-    /// Returns the server name of the room ID.
-    #[napi(getter)]
-    pub fn server_name(&self) -> ServerName {
-        ServerName { inner: self.inner.server_name().unwrap().to_owned() }
     }
 }
 

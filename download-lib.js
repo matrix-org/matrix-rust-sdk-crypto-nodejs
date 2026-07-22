@@ -5,11 +5,16 @@ const { DownloaderHelper } = require("node-downloader-helper");
 const { version } = require("./package.json");
 
 // Get the platform and architecture based on environment variables,
-// falling back to the current platform and architecture
+// falling back to the current platform and architecture.
+//
+// The values used here are those supported by Node.js: see https://nodejs.org/api/os.html#osarch and https://nodejs.org/api/os.html#osplatform.
+//
 const platform = process.env.npm_config_target_platform || process.env.npm_config_platform || process.platform;
 const arch = process.env.npm_config_target_arch || process.env.npm_config_arch || process.arch;
 
-const DOWNLOADS_BASE_URL = "https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/releases/download";
+const DOWNLOADS_BASE_URL =
+    process.env.MATRIX_SDK_CRYPTO_DOWNLOADS_BASE_URL ||
+    "https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/releases/download";
 const CURRENT_VERSION = `v${version}`;
 
 const byteHelper = function (value) {
@@ -122,6 +127,9 @@ switch (platform) {
                     download_lib("matrix-sdk-crypto.linux-x64-gnu.node");
                 }
                 break;
+            case "ia32":
+                download_lib("matrix-sdk-crypto.linux-ia32-gnu.node");
+                break;
             case "arm64":
                 if (isMusl()) {
                     throw new Error("Linux for arm64 musl isn't support at the moment");
@@ -134,6 +142,9 @@ switch (platform) {
                 break;
             case "s390x":
                 download_lib("matrix-sdk-crypto.linux-s390x-gnu.node");
+                break;
+            case "riscv64":
+                download_lib("matrix-sdk-crypto.linux-riscv64-gnu.node");
                 break;
             default:
                 throw new Error(`Unsupported architecture on Linux: ${arch}`);

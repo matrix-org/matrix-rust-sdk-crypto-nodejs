@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use matrix_sdk_crypto::backups::{
     SignatureState as InnerSignatureState, SignatureVerification as InnerSignatureVerification,
 };
-use napi::bindgen_prelude::{FromNapiValue, ToNapiValue};
 use napi_derive::*;
 
 use crate::{
