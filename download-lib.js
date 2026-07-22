@@ -1,5 +1,5 @@
-const { statSync, writeFileSync, readFileSync } = require('fs');
-const path = require('path');
+const { statSync, writeFileSync, readFileSync } = require("fs");
+const path = require("path");
 const { HttpsProxyAgent } = require("https-proxy-agent");
 const { DownloaderHelper } = require("node-downloader-helper");
 const { version } = require("./package.json");
@@ -30,13 +30,13 @@ async function download_lib(libname) {
     const VERSION_FILE = path.join(__dirname, libname + ".version");
     try {
         statSync(path.join(__dirname, libname));
-        const downloadedVersion = readFileSync(VERSION_FILE, 'utf-8');
+        const downloadedVersion = readFileSync(VERSION_FILE, "utf-8");
         if (downloadedVersion === version) {
             console.debug("File already in place, not downloading");
         }
         return;
     } catch (ex) {
-        if (ex.code === 'ENOENT') {
+        if (ex.code === "ENOENT") {
             // Missing file, continue;
         } else {
             console.error(ex);
