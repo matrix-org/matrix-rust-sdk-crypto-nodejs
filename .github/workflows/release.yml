@@ -88,6 +88,9 @@ jobs:
           - target: x86_64-unknown-linux-musl
             os: ubuntu-22.04
             apt_install: musl-tools
+          - target: aarch64-unknown-linux-musl
+            os: ubuntu-22.04
+            apt_install: musl-tools
           - target: s390x-unknown-linux-gnu
             os: ubuntu-22.04
             apt_install: gcc-s390x-linux-gnu g++-s390x-linux-gnu
