@@ -20,6 +20,12 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
 
+# Note we use --ignore-scripts wherever we invoke pnpm install,
+# to avoid running the download-lib.js script, which is useful
+# for users of this library, but not for us in development.
+# In fact, it fails when we update the version number and the
+# library does not yet exist.
+
 jobs:
   lint:
     name: lint
