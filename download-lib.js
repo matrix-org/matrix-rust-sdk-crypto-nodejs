@@ -80,19 +80,8 @@ async function download_lib(libname) {
         await dl.start();
         writeFileSync(path.join(__dirname, libname + ".version"), version);
     } catch (ex) {
-        if (ex.status === 404) {
-            // Invalid URL: can happen when we are creating a new release
-            console.warn(
-                "Warning: The lib was missing when we attempted to download " +
-                    "it. This is OK when we are creating a new release " +
-                    "version, but an error otherwise! Ignoring, in case we " +
-                    "are creating a new version.",
-            );
-            process.exit(0);
-        } else {
-            console.error(ex);
-            process.exit(1);
-        }
+        console.error(err);
+        process.exit(1);
     }
 }
 
