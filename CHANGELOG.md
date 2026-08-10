@@ -2,6 +2,9 @@
 
 ## UNRELEASED
 
+## v0.6.2 - 2026-08-07
+
+-   Add arm64 musl to prebuilt list. ([#87](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/87))
 -   Avoid downloading the prebuilt binary on every `npm install`. ([#42](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/42))
 -   Correct the README's instructions for how to build with tracing enabled. ([#97](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/97))
 -   Add method `OlmMachine.queryKeysForUsers` to build an out-of-band key request. ([#96](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/96))
