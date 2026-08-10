@@ -175,7 +175,7 @@ jobs:
 
       - name: Build docs
         run: |
-          pnpm install
+          pnpm install --ignore-scripts
           pnpm build
           pnpm doc
 
