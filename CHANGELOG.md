@@ -2,7 +2,11 @@
 
 ## UNRELEASED
 
-## v0.6.2 - 2026-08-07
+## v0.6.3 - 2026-08-11
+
+-   Fix the aarch64 musl build [#99](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/99)
+
+## v0.6.2 - 2026-08-10
 
 -   Add arm64 musl to prebuilt list. ([#87](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/87))
 -   Avoid downloading the prebuilt binary on every `npm install`. ([#42](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/42))
