@@ -19,6 +19,8 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
+  # Keep this in sync with release.yml
+  # Use a version prior to addition of a linker arg that breaks aarch64-unknown-linux-musl zig builds
   RUST_TOOLCHAIN_VERSION: 'nightly-2026-06-04'
 
 # Note we use --ignore-scripts wherever we invoke pnpm install,
@@ -40,8 +42,8 @@ jobs:
 
       - name: Install Rust
         run: |
-          rustup install "$RUST_TOOLCHAIN_VERSION"
-          rustup default "$RUST_TOOLCHAIN_VERSION"
+          rustup install "${{ env.RUST_TOOLCHAIN_VERSION }}"
+          rustup default "${{ env.RUST_TOOLCHAIN_VERSION }}"
           rustup component add rustfmt
 
       - name: Check formatting
