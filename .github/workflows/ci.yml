@@ -19,6 +19,7 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
+  RUST_TOOLCHAIN_VERSION: 'nightly-2026-06-04'
 
 # Note we use --ignore-scripts wherever we invoke pnpm install,
 # to avoid running the download-lib.js script, which is useful
@@ -39,8 +40,8 @@ jobs:
 
       - name: Install Rust
         run: |
-          rustup install nightly
-          rustup default nightly
+          rustup install "$RUST_TOOLCHAIN_VERSION"
+          rustup default "$RUST_TOOLCHAIN_VERSION"
           rustup component add rustfmt
 
       - name: Check formatting
