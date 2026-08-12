@@ -2,6 +2,10 @@
 
 ## UNRELEASED
 
+## v0.6.4 - 2026-08-12
+
+-   Pin the Rust toolchain to fix aarch musl build [#101](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/101)
+
 ## v0.6.3 - 2026-08-11
 
 -   Fix the aarch64 musl build [#99](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/99)
