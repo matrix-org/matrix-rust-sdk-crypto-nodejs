@@ -42,8 +42,8 @@ jobs:
 
       - name: Install Rust
         run: |
-          rustup install "$RUST_TOOLCHAIN_VERSION"
-          rustup default "$RUST_TOOLCHAIN_VERSION"
+          rustup install "${{ env.RUST_TOOLCHAIN_VERSION }}"
+          rustup default "${{ env.RUST_TOOLCHAIN_VERSION }}"
           rustup component add rustfmt
 
       - name: Check formatting
