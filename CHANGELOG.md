@@ -2,6 +2,10 @@
 
 ## UNRELEASED
 
+## v0.6.5 - 2026-08-12
+
+-   Fix usage of RUST_TOOLCHAIN_VERSION CI variable [#103](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/103)
+
 ## v0.6.4 - 2026-08-12
 
 -   Pin the Rust toolchain to fix aarch musl build [#101](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/101)
