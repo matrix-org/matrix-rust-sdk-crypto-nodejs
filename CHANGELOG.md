@@ -2,6 +2,10 @@
 
 ## UNRELEASED
 
+## v0.6.6 - 2026-08-13
+
+-   Don't check git branch etc. on publish in release workflow [#105](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/105)
+
 ## v0.6.5 - 2026-08-12
 
 -   Fix usage of RUST_TOOLCHAIN_VERSION CI variable [#103](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/103)
