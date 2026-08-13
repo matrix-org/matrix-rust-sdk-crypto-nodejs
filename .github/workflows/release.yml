@@ -241,4 +241,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
 
       - name: Publish to npmjs.com
-        run: pnpm publish --access public --provenance
+        run: pnpm publish --access public --provenance --no-git-checks
