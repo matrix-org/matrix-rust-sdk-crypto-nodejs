@@ -231,6 +231,17 @@ jobs:
         run: |
           pnpm install --ignore-scripts
           pnpm release-build
+
+      - name: Generate native artifact manifest from release assets
+        run: |
+          gh release download "$INPUTS_TAG" --pattern '*.node' --dir release-artifacts
+          node native-artifacts.js generate release-artifacts "$INPUTS_TAG"
+        env:
+          INPUTS_TAG: ${{ inputs.tag || github.ref_name }}
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Pack npm package
+        run: |
           pnpm pack
 
       - name: Upload npm package to release

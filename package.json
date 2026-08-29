@@ -32,12 +32,12 @@
         "release-build": "napi build --platform --release --strip",
         "build": "napi build --platform",
         "postinstall": "node download-lib.js",
+        "prepack": "node native-artifacts.js check",
         "test": "jest --verbose --testTimeout 10000",
         "doc": "typedoc --tsconfig ."
     },
     "dependencies": {
-        "https-proxy-agent": "^7.0.5",
-        "node-downloader-helper": "^2.1.9"
+        "https-proxy-agent": "^7.0.5"
     },
     "packageManager": "pnpm@11.2.2"
 }

@@ -17,7 +17,16 @@ Just add the latest release to your `package.json`:
 $ npm install --save @matrix-org/matrix-sdk-crypto-nodejs
 ```
 
-When installing, NPM will download the corresponding prebuilt Rust library for your current host system. The following are supported:
+When installing, NPM will download the corresponding prebuilt Rust library for your current host system.
+
+The installer checks the library's SHA-256 and size against a versioned manifest
+bundled in the npm package, including when reusing an existing download. Downloads
+are staged and verified before becoming available to the native loader. A missing
+or invalid manifest, incomplete transfer, or integrity mismatch fails installation.
+The manifest is trusted through the npm package's integrity; it does not protect
+against a compromised package publisher.
+
+The following targets are supported:
 
 <table>
   <thead>
@@ -111,6 +120,8 @@ $ npm install --save @matrix-org/matrix-sdk-crypto-nodejs
 
 The downloader appends `/v<version>/<filename>` to this base URL, so the mirror
 must preserve the same directory layout as the GitHub Releases page.
+Mirrors must also serve exactly the release bytes: a rebuilt or modified library
+will fail the bundled integrity check.
 
 ## Development
 
@@ -138,6 +149,12 @@ $ pnpm install --ignore-scripts
 $ pnpm build
 $ pnpm test
 ```
+
+Source checkouts do not include the generated release manifest. Keep
+`--ignore-scripts` when installing development dependencies and build the native
+library locally as above; no download or manifest is needed for that workflow.
+Packing a distributable npm package requires the complete release assets and
+manifest described in [RELEASING.md](RELEASING.md).
 
 An `index.js`, `index.d.ts` and a `*.node` files should be
 generated. At the same level of those files, you can edit a file and

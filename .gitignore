@@ -2,6 +2,9 @@
 /index.js
 /index.d.ts
 /matrix-sdk-crypto.*.node*
+/native-artifacts.json
+/release-artifacts/
+/.native-artifact-*/
 /docs/*
 /target
 *.tgz
