@@ -10,7 +10,7 @@ pub(crate) use matrix_sdk_common::ruma::api::client::{
 };
 use matrix_sdk_common::{
     deserialized_responses::{AlgorithmInfo, EncryptionInfo},
-    ruma::{self, api::IncomingResponse as RumaIncomingResponse},
+    ruma::{self, api::IncomingResponseExt},
 };
 use matrix_sdk_crypto::types::requests::AnyIncomingResponse;
 use napi_derive::*;
@@ -81,6 +81,10 @@ impl TryFrom<(RequestType, http::Response<Vec<u8>>)> for OwnedResponse {
     fn try_from(
         (request_type, response): (RequestType, http::Response<Vec<u8>>),
     ) -> Result<Self, Self::Error> {
+        // ...::try_from_http_response wants `&[u8]`, so we do an in-place conversion.
+        let (parts, body) = response.into_parts();
+        let response = http::Response::from_parts(parts, body.as_slice());
+
         match request_type {
             RequestType::KeysUpload => {
                 KeysUploadResponse::try_from_http_response(response).map(Into::into)
