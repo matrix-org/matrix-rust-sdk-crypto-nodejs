@@ -10,15 +10,15 @@ pub(crate) use matrix_sdk_common::ruma::api::client::{
 };
 use matrix_sdk_common::{
     deserialized_responses::{AlgorithmInfo, EncryptionInfo},
-    ruma::{self, api::IncomingResponse as RumaIncomingResponse},
+    ruma::{self, api::IncomingResponseExt},
 };
 use matrix_sdk_crypto::types::requests::AnyIncomingResponse;
 use napi_derive::*;
 
 use crate::{encryption, identifiers, into_err, requests::RequestType};
 
-pub(crate) fn response_from_string(body: &str) -> http::Result<http::Response<Vec<u8>>> {
-    http::Response::builder().status(200).body(body.as_bytes().to_vec())
+pub(crate) fn response_from_string(body: &str) -> http::Result<http::Response<&[u8]>> {
+    http::Response::builder().status(200).body(body.as_bytes())
 }
 
 /// Intermediate private type to store an incoming owned response,
@@ -75,11 +75,11 @@ impl From<KeysBackupResponse> for OwnedResponse {
     }
 }
 
-impl TryFrom<(RequestType, http::Response<Vec<u8>>)> for OwnedResponse {
+impl TryFrom<(RequestType, http::Response<&[u8]>)> for OwnedResponse {
     type Error = napi::Error;
 
     fn try_from(
-        (request_type, response): (RequestType, http::Response<Vec<u8>>),
+        (request_type, response): (RequestType, http::Response<&[u8]>),
     ) -> Result<Self, Self::Error> {
         match request_type {
             RequestType::KeysUpload => {
