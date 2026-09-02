@@ -17,8 +17,8 @@ use napi_derive::*;
 
 use crate::{encryption, identifiers, into_err, requests::RequestType};
 
-pub(crate) fn response_from_string(body: &str) -> http::Result<http::Response<Vec<u8>>> {
-    http::Response::builder().status(200).body(body.as_bytes().to_vec())
+pub(crate) fn response_from_string(body: &str) -> http::Result<http::Response<&[u8]>> {
+    http::Response::builder().status(200).body(body.as_bytes())
 }
 
 /// Intermediate private type to store an incoming owned response,
@@ -75,16 +75,12 @@ impl From<KeysBackupResponse> for OwnedResponse {
     }
 }
 
-impl TryFrom<(RequestType, http::Response<Vec<u8>>)> for OwnedResponse {
+impl TryFrom<(RequestType, http::Response<&[u8]>)> for OwnedResponse {
     type Error = napi::Error;
 
     fn try_from(
-        (request_type, response): (RequestType, http::Response<Vec<u8>>),
+        (request_type, response): (RequestType, http::Response<&[u8]>),
     ) -> Result<Self, Self::Error> {
-        // ...::try_from_http_response wants `&[u8]`, so we do an in-place conversion.
-        let (parts, body) = response.into_parts();
-        let response = http::Response::from_parts(parts, body.as_slice());
-
         match request_type {
             RequestType::KeysUpload => {
                 KeysUploadResponse::try_from_http_response(response).map(Into::into)
