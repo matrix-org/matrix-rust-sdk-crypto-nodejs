@@ -2,6 +2,14 @@
 
 ## UNRELEASED
 
+-   Update matrix-rust-sdk to `0.19.1`:
+
+    -   (No significant changes for matrix-rust-sdk-crypto)
+
+-   Update vodozemac to 0.11.2, which fixes a panic when decoding Ed25519 keys
+    from Base64, along with several zeroization issues.
+    ([0.11.2](https://github.com/matrix-org/vodozemac/releases/tag/0.11.2))
+
 ## v0.6.6 - 2026-08-13
 
 -   Don't check git branch etc. on publish in release workflow [#105](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/105)
