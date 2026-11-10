@@ -2,6 +2,8 @@
 
 ## UNRELEASED
 
+## v0.7.0 - 2026-11-10
+
 -   Update matrix-rust-sdk to `0.19.1`:
 
     -   (No significant changes for matrix-rust-sdk-crypto)
