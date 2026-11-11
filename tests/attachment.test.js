@@ -1,16 +1,12 @@
 const { Attachment, EncryptedAttachment } = require("../");
 
 describe(Attachment.name, () => {
-    const originalData = "hello";
-    const textEncoder = new TextEncoder();
-    const textDecoder = new TextDecoder();
-
-    let encryptedAttachment;
-
     test("can encrypt data", () => {
-        encryptedAttachment = Attachment.encrypt(textEncoder.encode(originalData));
+        const originalData = Uint8Array.from({ length: 256 }, (_, i) => i);
+        const encryptedAttachment = Attachment.encrypt(originalData);
 
-        const mediaEncryptionInfo = JSON.parse(encryptedAttachment.mediaEncryptionInfo);
+        const serializedMediaEncryptionInfo = encryptedAttachment.mediaEncryptionInfo;
+        const mediaEncryptionInfo = JSON.parse(serializedMediaEncryptionInfo);
 
         expect(mediaEncryptionInfo).toMatchObject({
             v: "v2",
@@ -28,28 +24,31 @@ describe(Attachment.name, () => {
         });
 
         const encryptedData = encryptedAttachment.encryptedData;
-        expect(
-            encryptedData.every((i) => {
-                i != 0;
-            }),
-        ).toStrictEqual(false);
+        expect(encryptedData).toBeInstanceOf(Uint8Array);
+        expect(encryptedData).toHaveLength(originalData.length);
+        expect(encryptedData).not.toStrictEqual(originalData);
+
+        const reconstructedAttachment = new EncryptedAttachment(encryptedData, serializedMediaEncryptionInfo);
+        expect(Attachment.decrypt(reconstructedAttachment)).toStrictEqual(originalData);
     });
 
-    test("can decrypt data", () => {
+    test("can decrypt data only once", () => {
+        const originalData = Uint8Array.from({ length: 256 }, (_, i) => i);
+        const encryptedAttachment = Attachment.encrypt(originalData);
+        const encryptedData = new Uint8Array(encryptedAttachment.encryptedData);
+
         expect(encryptedAttachment.hasMediaEncryptionInfoBeenConsumed).toStrictEqual(false);
 
         const decryptedAttachment = Attachment.decrypt(encryptedAttachment);
 
-        expect(textDecoder.decode(decryptedAttachment)).toStrictEqual(originalData);
+        expect(decryptedAttachment).toStrictEqual(originalData);
         expect(encryptedAttachment.hasMediaEncryptionInfoBeenConsumed).toStrictEqual(true);
-    });
-
-    test("can only decrypt once", () => {
-        expect(encryptedAttachment.hasMediaEncryptionInfoBeenConsumed).toStrictEqual(true);
+        expect(encryptedAttachment.mediaEncryptionInfo).toBeNull();
+        expect(encryptedAttachment.encryptedData).toStrictEqual(encryptedData);
 
         expect(() => {
-            textDecoder.decode(decryptedAttachment);
-        }).toThrow();
+            Attachment.decrypt(encryptedAttachment);
+        }).toThrow("The media encryption info are absent from the given encrypted attachment");
     });
 });
 
