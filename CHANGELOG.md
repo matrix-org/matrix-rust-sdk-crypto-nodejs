@@ -2,7 +2,7 @@
 
 ## UNRELEASED
 
-## v0.7.0 - 2026-11-10
+## v0.7.0 - 2026-11-11
 
 -   Update matrix-rust-sdk to `0.19.1`:
 
