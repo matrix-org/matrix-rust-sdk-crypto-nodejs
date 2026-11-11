@@ -80,7 +80,7 @@ async function download_lib(libname) {
         await dl.start();
         writeFileSync(path.join(__dirname, libname + ".version"), version);
     } catch (ex) {
-        console.error(err);
+        console.error(ex);
         process.exit(1);
     }
 }
