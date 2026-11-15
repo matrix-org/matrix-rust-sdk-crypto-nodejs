@@ -1,5 +1,6 @@
 /.github
 /docs
+/npm
 /pkg
 /pnpm-lock.yaml
 /target

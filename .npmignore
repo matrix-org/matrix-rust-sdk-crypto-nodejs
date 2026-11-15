@@ -1,6 +1,7 @@
 src/
 tests/
 target/
+npm/
 Cargo.lock
 Cargo.toml
 build.rs

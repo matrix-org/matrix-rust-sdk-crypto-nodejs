@@ -5,8 +5,9 @@ name: Release Crypto-Node.js
 # It is triggered when seeing a tag prefixed matching `matrix-sdk-crypto-nodejs-v[0-9]+.*`,
 # which then build the native bindings for linux, mac and windows via the CI and uploads
 # them to the corresponding Github Release tag. Once they are finished, this workflow will
-# package the npm tar.gz and uploads that to the Github Release tag as well, before publishing
-# it to npmjs.com automatically.
+# publish each native binding to npmjs.com as its own per-platform package (see the `npm`
+# directory), then package the npm tar.gz and upload that to the Github Release tag as
+# well, before publishing it to npmjs.com automatically.
 #
 # The usual way to trigger this is by manually triggering the `prep-release`
 # workflow. See its documentation for instructions how to use it.
@@ -74,6 +75,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # Keep this in sync with `napi.triples` in package.json and the per-platform
+        # packages in the `npm` directory (`napi create-npm-dir -t .` creates them).
         include:
           # ----------------------------------- Linux
           # Use Ubuntu LTS-1 for broader glibc compatibility.
@@ -168,7 +171,7 @@ jobs:
           sudo apt-get install -y ${{ matrix.apt_install }}
       - name: Build lib
         run: |
-          pnpm install --ignore-scripts
+          pnpm install
           npx napi build --platform --release --strip --target ${{ matrix.target }} ${{ contains(matrix.target, 'musl') && '--zig' || '' }}
       - name: Upload artifacts to release
         if: runner.os != 'Windows'
@@ -184,6 +187,13 @@ jobs:
         env:
           INPUTS_TAG: ${{ inputs.tag || github.ref_name }}
           GH_TOKEN: ${{ github.token }}
+      # The publish job below puts this into the per-platform npm package.
+      - name: Upload artifacts to workflow
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: bindings-${{ matrix.target }}
+          path: "*.node"
+          if-no-files-found: error
 
   publish-nodejs-package:
     name: "Package nodejs package"
@@ -229,9 +239,28 @@ jobs:
 
       - name: Build lib
         run: |
-          pnpm install --ignore-scripts
+          pnpm install
           pnpm release-build
-          pnpm pack
+
+      - name: Download artifacts
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: artifacts
+          pattern: bindings-*
+
+      # `napi artifacts` copies each native binding into its package directory under `npm`,
+      # and `napi prepublish` lists those packages as `optionalDependencies` in `package.json`
+      # and publishes them, ahead of the package that depends on them.
+      - name: Publish per-platform packages to npmjs.com
+        run: |
+          npx napi artifacts
+          npx napi prepublish --skip-gh-release
+        env:
+          NPM_CONFIG_ACCESS: public
+          NPM_CONFIG_PROVENANCE: "true"
+
+      - name: Pack nodejs package
+        run: pnpm pack
 
       - name: Upload npm package to release
         run: |

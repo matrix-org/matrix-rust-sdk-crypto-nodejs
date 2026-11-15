@@ -17,7 +17,11 @@ Just add the latest release to your `package.json`:
 $ npm install --save @matrix-org/matrix-sdk-crypto-nodejs
 ```
 
-When installing, NPM will download the corresponding prebuilt Rust library for your current host system. The following are supported:
+The prebuilt Rust library comes in a separate package for each platform, such as
+`@matrix-org/matrix-sdk-crypto-nodejs-linux-x64-gnu`. This package lists them all as
+optional dependencies, and your package manager installs only the one that matches your
+system, unless optional dependencies are turned off (for example with
+`npm install --omit=optional`). The following platforms are supported:
 
 <table>
   <thead>
@@ -95,22 +99,13 @@ When installing, NPM will download the corresponding prebuilt Rust library for y
   </tbody>
 </table>
 
-### Custom downloads base URL
+To install for a system other than the one running the install, for example when
+building a container image, tell your package manager which system to install for:
+npm takes `--os`, `--cpu` and `--libc`, and pnpm and Yarn take a `supportedArchitectures`
+setting.
 
-By default, prebuilt binaries are downloaded from
-`https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/releases/download`.
-If you need to fetch them from a mirror or a private host (for example, in a
-corporate network or a region with restricted access to GitHub), set the
-`MATRIX_SDK_CRYPTO_DOWNLOADS_BASE_URL` environment variable before running
-`npm install`:
-
-```sh
-$ export MATRIX_SDK_CRYPTO_DOWNLOADS_BASE_URL="https://npmmirror.com/mirrors/@matrix-org/matrix-sdk-crypto-nodejs"
-$ npm install --save @matrix-org/matrix-sdk-crypto-nodejs
-```
-
-The downloader appends `/v<version>/<filename>` to this base URL, so the mirror
-must preserve the same directory layout as the GitHub Releases page.
+For any other platform, build the library from source as described under
+[Development](#development).
 
 ## Development
 
@@ -134,7 +129,7 @@ Once the Rust compiler, Node.js and npm are installed, you can run the
 following commands:
 
 ```sh
-$ pnpm install --ignore-scripts
+$ pnpm install
 $ pnpm build
 $ pnpm test
 ```

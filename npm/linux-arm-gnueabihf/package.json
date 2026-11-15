@@ -1,0 +1,22 @@
+{
+  "name": "@matrix-org/matrix-sdk-crypto-nodejs-linux-arm-gnueabihf",
+  "version": "0.7.0",
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "arm"
+  ],
+  "main": "matrix-sdk-crypto.linux-arm-gnueabihf.node",
+  "files": [
+    "matrix-sdk-crypto.linux-arm-gnueabihf.node"
+  ],
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">= 24"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs"
+  }
+}

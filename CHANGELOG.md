@@ -2,6 +2,16 @@
 
 ## UNRELEASED
 
+-   Ship the prebuilt library in a separate npm package for each platform, such as
+    `@matrix-org/matrix-sdk-crypto-nodejs-linux-x64-gnu`, which package managers install
+    as an optional dependency. This replaces the `postinstall` script that downloaded it
+    from the GitHub release, so installing with scripts turned off, as pnpm does by
+    default, now works. The script's settings go with it: use an npm registry mirror
+    instead of `MATRIX_SDK_CRYPTO_DOWNLOADS_BASE_URL`, and your package manager's options
+    for installing for another platform (see the README) instead of `npm_config_platform`
+    and `npm_config_arch`.
+    [#119](https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs/pull/119)
+
 ## v0.7.0 - 2026-11-11
 
 -   Update matrix-rust-sdk to `0.19.1`:
