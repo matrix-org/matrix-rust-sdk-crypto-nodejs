@@ -1,0 +1,22 @@
+{
+  "name": "@matrix-org/matrix-sdk-crypto-nodejs-darwin-arm64",
+  "version": "0.7.0",
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "main": "matrix-sdk-crypto.darwin-arm64.node",
+  "files": [
+    "matrix-sdk-crypto.darwin-arm64.node"
+  ],
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">= 24"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs"
+  }
+}

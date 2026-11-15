@@ -1,7 +1,7 @@
 /node_modules
 /index.js
 /index.d.ts
-/matrix-sdk-crypto.*.node*
+*.node
 /docs/*
 /target
 *.tgz

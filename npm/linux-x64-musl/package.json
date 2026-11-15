@@ -1,0 +1,25 @@
+{
+  "name": "@matrix-org/matrix-sdk-crypto-nodejs-linux-x64-musl",
+  "version": "0.7.0",
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "main": "matrix-sdk-crypto.linux-x64-musl.node",
+  "files": [
+    "matrix-sdk-crypto.linux-x64-musl.node"
+  ],
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">= 24"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs"
+  },
+  "libc": [
+    "musl"
+  ]
+}

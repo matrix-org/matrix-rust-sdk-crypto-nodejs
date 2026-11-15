@@ -1,0 +1,22 @@
+{
+  "name": "@matrix-org/matrix-sdk-crypto-nodejs-win32-ia32-msvc",
+  "version": "0.7.0",
+  "os": [
+    "win32"
+  ],
+  "cpu": [
+    "ia32"
+  ],
+  "main": "matrix-sdk-crypto.win32-ia32-msvc.node",
+  "files": [
+    "matrix-sdk-crypto.win32-ia32-msvc.node"
+  ],
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">= 24"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs"
+  }
+}

@@ -11,7 +11,16 @@
         "name": "matrix-sdk-crypto",
         "triples": {
             "additional": [
-                "aarch64-apple-darwin"
+                "i686-unknown-linux-gnu",
+                "aarch64-unknown-linux-gnu",
+                "arm-unknown-linux-gnueabihf",
+                "x86_64-unknown-linux-musl",
+                "aarch64-unknown-linux-musl",
+                "s390x-unknown-linux-gnu",
+                "riscv64gc-unknown-linux-gnu",
+                "aarch64-apple-darwin",
+                "i686-pc-windows-msvc",
+                "aarch64-pc-windows-msvc"
             ]
         }
     },
@@ -31,13 +40,9 @@
         "lint": "prettier --check .",
         "release-build": "napi build --platform --release --strip",
         "build": "napi build --platform",
-        "postinstall": "node download-lib.js",
+        "version": "napi version",
         "test": "jest --verbose --testTimeout 10000",
         "doc": "typedoc --tsconfig ."
-    },
-    "dependencies": {
-        "https-proxy-agent": "^7.0.6",
-        "node-downloader-helper": "^2.1.11"
     },
     "packageManager": "pnpm@11.2.2"
 }

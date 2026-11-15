@@ -23,12 +23,6 @@ env:
   # Use a version prior to addition of a linker arg that breaks aarch64-unknown-linux-musl zig builds
   RUST_TOOLCHAIN_VERSION: 'nightly-2026-06-04'
 
-# Note we use --ignore-scripts wherever we invoke pnpm install,
-# to avoid running the download-lib.js script, which is useful
-# for users of this library, but not for us in development.
-# In fact, it fails when we update the version number and the
-# library does not yet exist.
-
 jobs:
   lint:
     name: lint
@@ -60,7 +54,7 @@ jobs:
           node-version-file: .node-version
 
       - name: Install NPM dependencies
-        run: pnpm install --ignore-scripts
+        run: pnpm install
 
       - name: run lint
         run: pnpm lint
@@ -116,7 +110,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Install NPM dependencies
-        run: pnpm install --ignore-scripts
+        run: pnpm install
 
       - name: Build
         run: pnpm release-build
@@ -184,7 +178,7 @@ jobs:
 
       - name: Build docs
         run: |
-          pnpm install --ignore-scripts
+          pnpm install
           pnpm build
           pnpm doc
 

@@ -1,0 +1,25 @@
+{
+  "name": "@matrix-org/matrix-sdk-crypto-nodejs-linux-s390x-gnu",
+  "version": "0.7.0",
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "s390x"
+  ],
+  "main": "matrix-sdk-crypto.linux-s390x-gnu.node",
+  "files": [
+    "matrix-sdk-crypto.linux-s390x-gnu.node"
+  ],
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">= 24"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/matrix-org/matrix-rust-sdk-crypto-nodejs"
+  },
+  "libc": [
+    "glibc"
+  ]
+}
